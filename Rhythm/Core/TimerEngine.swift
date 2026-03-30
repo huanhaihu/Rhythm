@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 enum TimerState: Equatable {
     case idle
@@ -13,8 +12,7 @@ class TimerEngine: ObservableObject {
     @Published var workSecondsRemaining: Int = 0
     @Published var restSecondsRemaining: Int = 0
 
-    // Called when overlay should appear/disappear
-    var onOverlayNeeded: ((Bool, Bool) -> Void)?  // (show, isMicro)
+    var onOverlayNeeded: ((Bool, Bool) -> Void)?
 
     private let settings: Settings
     private let sessionStore: SessionStore
@@ -25,16 +23,14 @@ class TimerEngine: ObservableObject {
     private var microRestTimer: Timer?
     private var restStartTime: Date?
     private var plannedRestDuration: Int = 0
+    private var currentRestIsManual: Bool = false
 
     init(settings: Settings, sessionStore: SessionStore, soundPlayer: SoundPlayer) {
         self.settings = settings
         self.sessionStore = sessionStore
         self.soundPlayer = soundPlayer
         self.screenLockMonitor = ScreenLockMonitor()
-
-        screenLockMonitor.onScreenLocked = { [weak self] in
-            self?.handleScreenLocked()
-        }
+        screenLockMonitor.onScreenLocked = { [weak self] in self?.handleScreenLocked() }
     }
 
     // MARK: - Public API
@@ -48,12 +44,23 @@ class TimerEngine: ObservableObject {
     }
 
     func pause() {
-        guard state == .working else { return }
-        mainTimer?.invalidate()
-        mainTimer = nil
-        microRestTimer?.invalidate()
-        microRestTimer = nil
+        mainTimer?.invalidate(); mainTimer = nil
+        microRestTimer?.invalidate(); microRestTimer = nil
         state = .idle
+        workSecondsRemaining = 0
+        restSecondsRemaining = 0
+    }
+
+    /// 一键重置：用当前设置重新开始
+    func resetWithCurrentSettings() {
+        mainTimer?.invalidate(); mainTimer = nil
+        microRestTimer?.invalidate(); microRestTimer = nil
+        onOverlayNeeded?(false, false)
+        sessionStore.recordReset()
+        state = .working
+        workSecondsRemaining = settings.workDuration
+        startMainTimer()
+        scheduleNextMicroRest()
     }
 
     func skipCurrentRest() {
@@ -66,6 +73,7 @@ class TimerEngine: ObservableObject {
 
     func triggerRestNow() {
         guard state == .working else { return }
+        currentRestIsManual = true
         workSecondsRemaining = 0
     }
 
@@ -76,12 +84,18 @@ class TimerEngine: ObservableObject {
             let m = workSecondsRemaining / 60
             let s = workSecondsRemaining % 60
             return String(format: "%d:%02d", m, s)
-        case .resting:      return "休息中 \(restSecondsRemaining)s"
-        case .microResting: return "微休息 \(restSecondsRemaining)s"
+        case .resting:
+            let m = restSecondsRemaining / 60
+            let s = restSecondsRemaining % 60
+            return m > 0 ? String(format: "休息 %d:%02d", m, s) : "休息 \(restSecondsRemaining)s"
+        case .microResting:
+            return "微休 \(restSecondsRemaining)s"
         }
     }
 
     var isRunning: Bool { state != .idle }
+
+    var plannedDuration: Int { plannedRestDuration }
 
     // MARK: - Private
 
@@ -95,31 +109,20 @@ class TimerEngine: ObservableObject {
     private func tick() {
         switch state {
         case .working:
-            if workSecondsRemaining > 0 {
-                workSecondsRemaining -= 1
-            } else {
-                beginRest()
-            }
+            if workSecondsRemaining > 0 { workSecondsRemaining -= 1 }
+            else { beginRest() }
         case .resting:
-            if restSecondsRemaining > 0 {
-                restSecondsRemaining -= 1
-            } else {
-                finishRest(skipped: false)
-            }
+            if restSecondsRemaining > 0 { restSecondsRemaining -= 1 }
+            else { finishRest(skipped: false) }
         case .microResting:
-            if restSecondsRemaining > 0 {
-                restSecondsRemaining -= 1
-            } else {
-                finishMicroRest(skipped: false)
-            }
-        case .idle:
-            break
+            if restSecondsRemaining > 0 { restSecondsRemaining -= 1 }
+            else { finishMicroRest(skipped: false) }
+        case .idle: break
         }
     }
 
     private func beginRest() {
-        microRestTimer?.invalidate()
-        microRestTimer = nil
+        microRestTimer?.invalidate(); microRestTimer = nil
         state = .resting
         plannedRestDuration = settings.restDuration
         restSecondsRemaining = plannedRestDuration
@@ -129,18 +132,16 @@ class TimerEngine: ObservableObject {
     }
 
     private func finishRest(skipped: Bool) {
-        let actual = skipped
-            ? (plannedRestDuration - restSecondsRemaining)
-            : plannedRestDuration
-
+        let actual = skipped ? max(0, plannedRestDuration - restSecondsRemaining) : plannedRestDuration
         sessionStore.save(session: Session(
             id: UUID(), type: .rest,
             startTime: restStartTime ?? Date(),
             plannedDuration: plannedRestDuration,
-            actualDuration: max(actual, 0),
-            skipped: skipped
+            actualDuration: actual,
+            skipped: skipped,
+            wasManualTrigger: currentRestIsManual
         ))
-
+        currentRestIsManual = false
         onOverlayNeeded?(false, false)
         state = .working
         workSecondsRemaining = settings.workDuration
@@ -166,32 +167,27 @@ class TimerEngine: ObservableObject {
         restSecondsRemaining = plannedRestDuration
         restStartTime = Date()
         soundPlayer.playMicroAlert()
-        onOverlayNeeded?(true, true)
+        // No overlay for micro rest — countdown shows in menu bar only
     }
 
     private func finishMicroRest(skipped: Bool) {
-        let actual = skipped
-            ? (plannedRestDuration - restSecondsRemaining)
-            : plannedRestDuration
-
+        let actual = skipped ? max(0, plannedRestDuration - restSecondsRemaining) : plannedRestDuration
         sessionStore.save(session: Session(
             id: UUID(), type: .microRest,
             startTime: restStartTime ?? Date(),
             plannedDuration: plannedRestDuration,
-            actualDuration: max(actual, 0),
-            skipped: skipped
+            actualDuration: actual,
+            skipped: skipped,
+            wasManualTrigger: false
         ))
-
-        onOverlayNeeded?(false, false)
+        if !skipped { soundPlayer.playMicroAlert() }  // end chime
         state = .working
         scheduleNextMicroRest()
     }
 
     private func handleScreenLocked() {
-        mainTimer?.invalidate()
-        mainTimer = nil
-        microRestTimer?.invalidate()
-        microRestTimer = nil
+        mainTimer?.invalidate(); mainTimer = nil
+        microRestTimer?.invalidate(); microRestTimer = nil
         onOverlayNeeded?(false, false)
         state = .idle
         workSecondsRemaining = 0

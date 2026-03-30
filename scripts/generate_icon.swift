@@ -1,119 +1,124 @@
 #!/usr/bin/env swift
 // Run: swift scripts/generate_icon.swift
-// Generates all AppIcon PNG sizes for Rhythm
-
+// Uses NSBitmapImageRep to produce exact pixel sizes (Retina-safe)
 import AppKit
 import CoreGraphics
 
-func drawRhythmIcon(size: Int) -> NSImage {
-    let s = CGFloat(size)
-    let image = NSImage(size: NSSize(width: s, height: s))
-    image.lockFocus()
+func drawIcon(pixels: Int) -> NSBitmapImageRep {
+    let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: pixels, pixelsHigh: pixels,
+        bitsPerSample: 8, samplesPerPixel: 4,
+        hasAlpha: true, isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0, bitsPerPixel: 0
+    )!
 
-    guard let ctx = NSGraphicsContext.current?.cgContext else {
-        image.unlockFocus(); return image
-    }
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    let ctx = NSGraphicsContext.current!.cgContext
+    draw(ctx: ctx, s: CGFloat(pixels))
+    NSGraphicsContext.restoreGraphicsState()
+    return rep
+}
 
-    // --- Background: rounded rect with deep indigo→purple gradient ---
-    let radius = s * 0.22
-    let bgPath = CGPath(
-        roundedRect: CGRect(x: 0, y: 0, width: s, height: s),
-        cornerWidth: radius, cornerHeight: radius, transform: nil
-    )
+func draw(ctx: CGContext, s: CGFloat) {
+    // ── Background ────────────────────────────────────────────────
+    let corner = s * 0.22
+    let bgPath = CGPath(roundedRect: CGRect(x: 0, y: 0, width: s, height: s),
+                        cornerWidth: corner, cornerHeight: corner, transform: nil)
     ctx.addPath(bgPath)
     ctx.clip()
 
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    let gradColors = [
-        CGColor(red: 0.07, green: 0.06, blue: 0.22, alpha: 1.0),   // deep navy
-        CGColor(red: 0.18, green: 0.08, blue: 0.38, alpha: 1.0),   // indigo
-        CGColor(red: 0.32, green: 0.10, blue: 0.52, alpha: 1.0),   // purple
-    ] as CFArray
-    let locations: [CGFloat] = [0, 0.5, 1.0]
-    let gradient = CGGradient(colorsSpace: colorSpace, colors: gradColors, locations: locations)!
+    let bgColors = [CGColor(red: 0.04, green: 0.03, blue: 0.12, alpha: 1),
+                    CGColor(red: 0.09, green: 0.04, blue: 0.18, alpha: 1)] as CFArray
+    let bgGrad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                             colors: bgColors, locations: [0, 1])!
+    ctx.drawLinearGradient(bgGrad,
+                           start: CGPoint(x: 0, y: s), end: CGPoint(x: s, y: 0),
+                           options: [])
 
-    ctx.drawLinearGradient(
-        gradient,
-        start: CGPoint(x: 0, y: s),
-        end: CGPoint(x: s, y: 0),
-        options: []
-    )
+    // ── Equalizer bars ────────────────────────────────────────────
+    let barCount = 7
+    let maxBarH  = s * 0.58
+    let barW     = s * 0.075
+    let gap      = s * 0.042
+    let totalW   = CGFloat(barCount) * barW + CGFloat(barCount - 1) * gap
+    let originX  = (s - totalW) / 2
+    let baseline = s * 0.72
 
-    // --- Waveform: stylised sine wave ---
-    // Draw a smooth waveform across the icon center
-    let midY = s * 0.5
-    let amplitude = s * 0.18
-    let waveWidth = s * 0.80
-    let waveStartX = s * 0.10
-    let steps = 200
+    let heights: [CGFloat] = [0.42, 0.65, 0.83, 1.00, 0.83, 0.65, 0.42]
+    let barColors: [CGColor] = [
+        CGColor(red: 0.00, green: 0.90, blue: 0.95, alpha: 1),
+        CGColor(red: 0.10, green: 0.65, blue: 1.00, alpha: 1),
+        CGColor(red: 0.50, green: 0.30, blue: 1.00, alpha: 1),
+        CGColor(red: 0.85, green: 0.15, blue: 0.95, alpha: 1),
+        CGColor(red: 1.00, green: 0.25, blue: 0.55, alpha: 1),
+        CGColor(red: 1.00, green: 0.50, blue: 0.15, alpha: 1),
+        CGColor(red: 1.00, green: 0.80, blue: 0.10, alpha: 1),
+    ]
 
-    ctx.setStrokeColor(CGColor(red: 0.45, green: 0.88, blue: 1.0, alpha: 0.95))
-    ctx.setLineWidth(s * 0.045)
-    ctx.setLineCap(.round)
-    ctx.setLineJoin(.round)
+    for i in 0 ..< barCount {
+        let h  = heights[i] * maxBarH
+        let x  = originX + CGFloat(i) * (barW + gap)
+        let y  = baseline - h
+        let r  = barW / 2
+        let c  = barColors[i]
 
-    let path = CGMutablePath()
-    for i in 0...steps {
-        let t = CGFloat(i) / CGFloat(steps)
-        let x = waveStartX + t * waveWidth
-        // Composite wave: main + harmonic for rhythm feel
-        let angle = t * CGFloat.pi * 4
-        let y = midY - amplitude * sin(angle) - (amplitude * 0.35) * sin(angle * 2.5)
-        if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
-        else { path.addLine(to: CGPoint(x: x, y: y)) }
+        // Glow
+        let gw = barW * 2.2
+        let gx = x - (gw - barW) / 2
+        let glowPath = CGPath(roundedRect: CGRect(x: gx, y: y - r, width: gw, height: h + r * 2),
+                              cornerWidth: gw / 2, cornerHeight: gw / 2, transform: nil)
+        ctx.setFillColor(c.copy(alpha: 0.20)!)
+        ctx.addPath(glowPath); ctx.fillPath()
+
+        // Bar with vertical gradient
+        let barPath = CGPath(roundedRect: CGRect(x: x, y: y, width: barW, height: h),
+                             cornerWidth: r, cornerHeight: r, transform: nil)
+        ctx.saveGState()
+        ctx.addPath(barPath); ctx.clip()
+        let barGrad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                  colors: [c, c.copy(alpha: 0.55)!] as CFArray,
+                                  locations: [0, 1])!
+        ctx.drawLinearGradient(barGrad,
+                               start: CGPoint(x: x, y: y),
+                               end:   CGPoint(x: x, y: y + h), options: [])
+        ctx.restoreGState()
+
+        // Top highlight
+        let capH = min(barW * 0.55, h * 0.14)
+        let capPath = CGPath(roundedRect: CGRect(x: x, y: y, width: barW, height: capH),
+                             cornerWidth: r, cornerHeight: r, transform: nil)
+        ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.35))
+        ctx.addPath(capPath); ctx.fillPath()
     }
-    ctx.addPath(path)
+
+    // Baseline
+    ctx.setStrokeColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.08))
+    ctx.setLineWidth(max(1, s * 0.008))
+    ctx.move(to: CGPoint(x: originX - s * 0.02, y: baseline))
+    ctx.addLine(to: CGPoint(x: originX + totalW + s * 0.02, y: baseline))
     ctx.strokePath()
+}
 
-    // --- Subtle glow dots at peaks ---
-    let dotRadius = s * 0.025
-    ctx.setFillColor(CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.6))
-    for peak in [0.125, 0.375, 0.625, 0.875] as [CGFloat] {
-        let t = peak
-        let x = waveStartX + t * waveWidth
-        let angle = t * CGFloat.pi * 4
-        let y = midY - amplitude * sin(angle) - (amplitude * 0.35) * sin(angle * 2.5)
-        ctx.fillEllipse(in: CGRect(
-            x: x - dotRadius, y: y - dotRadius,
-            width: dotRadius * 2, height: dotRadius * 2
-        ))
+func savePNG(_ rep: NSBitmapImageRep, to path: String) {
+    guard let png = rep.representation(using: .png, properties: [:]) else {
+        print("❌ encode failed: \(path)"); return
     }
-
-    image.unlockFocus()
-    return image
+    do { try png.write(to: URL(fileURLWithPath: path)); print("✅ \(path)") }
+    catch { print("❌ \(path): \(error)") }
 }
 
-func savePNG(_ image: NSImage, to path: String) {
-    guard let tiff = image.tiffRepresentation,
-          let bitmap = NSBitmapImageRep(data: tiff),
-          let png = bitmap.representation(using: .png, properties: [:]) else {
-        print("❌ Failed to encode \(path)")
-        return
-    }
-    do {
-        try png.write(to: URL(fileURLWithPath: path))
-        print("✅ \(path)")
-    } catch {
-        print("❌ \(path): \(error)")
-    }
+let scriptDir = URL(fileURLWithPath: CommandLine.arguments[0])
+    .deletingLastPathComponent().path
+let outDir = CommandLine.arguments.count > 1
+    ? CommandLine.arguments[1]
+    : "\(scriptDir)/../Rhythm/Assets.xcassets/AppIcon.appiconset"
+
+print("Generating icons → \(outDir)\n")
+// Exact pixel sizes needed by macOS AppIcon
+for px in [16, 32, 64, 128, 256, 512, 1024] {
+    savePNG(drawIcon(pixels: px), to: "\(outDir)/icon_\(px).png")
 }
-
-// Determine output directory
-let outputDir: String
-if CommandLine.arguments.count > 1 {
-    outputDir = CommandLine.arguments[1]
-} else {
-    // Default: relative to script location → project AppIcon.appiconset
-    let scriptDir = URL(fileURLWithPath: #file).deletingLastPathComponent().path
-    outputDir = scriptDir + "/../Rhythm/Assets.xcassets/AppIcon.appiconset"
-}
-
-let sizes = [16, 32, 64, 128, 256, 512, 1024]
-print("Generating Rhythm icons in: \(outputDir)\n")
-
-for size in sizes {
-    let img = drawRhythmIcon(size: size)
-    savePNG(img, to: "\(outputDir)/icon_\(size).png")
-}
-
-print("\nDone! Open Rhythm.xcodeproj in Xcode to verify icons.")
+print("\nDone!")

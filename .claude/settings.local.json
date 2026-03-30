@@ -4,7 +4,32 @@
       "Bash(swift:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh auth:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(xcode-select -p)",
+      "Read(//Applications/**)",
+      "Bash(sudo xcode-select:*)",
+      "Bash(xcodebuild -version)",
+      "Bash(open:*)",
+      "Bash(xcodebuild -scheme Rhythm -destination 'platform=macOS' build)",
+      "Bash(grep -v \"^$\")",
+      "Bash(osascript:*)",
+      "Bash(pkill -x Rhythm)",
+      "Bash(sample Rhythm 1)",
+      "Bash(pkill -9 -x Rhythm)",
+      "Bash(sample Rhythm 3)",
+      "Bash(kill -9 57497)",
+      "Bash(ps:*)",
+      "Bash(pkill -9 debugserver)",
+      "Bash(cp:*)",
+      "Bash(find /Users/huanhai.hu/Library/Developer/Xcode/DerivedData/Rhythm-ecmutljxjgmmywaoyagkgkzycxgd -name *.car -o -name AppIcon*)",
+      "Bash(xcodebuild -scheme Rhythm -destination 'platform=macOS' clean build)",
+      "Bash(xcodebuild -project Rhythm.xcodeproj -scheme Rhythm -configuration Release -derivedDataPath build clean build)",
+      "Bash(pkill:*)",
+      "Bash(rm -rf /Applications/Rhythm.app)",
+      "Bash(cp -Rf /Users/huanhai.hu/Rhythm/build/Build/Products/Release/Rhythm.app /Applications/Rhythm.app)"
     ]
   }
 }

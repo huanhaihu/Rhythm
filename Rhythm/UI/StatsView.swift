@@ -5,14 +5,14 @@ struct StatsView: View {
 
     var body: some View {
         Group {
-            if sessionStore.sessions.isEmpty {
+            if sessionStore.dayStats.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
                     Text("暂无数据")
                         .foregroundColor(.secondary)
-                    Text("开始计时后，你的休息记录会显示在这里。")
+                    Text("开始计时后，休息记录会显示在这里。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -20,30 +20,54 @@ struct StatsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(sessionStore.groupedByDay, id: \.0) { day, sessions in
-                        Section(header: daySummaryHeader(day: day, sessions: sessions)) {
-                            ForEach(sessions) { session in
+                    ForEach(sessionStore.dayStats, id: \.date) { stats in
+                        Section {
+                            // Summary cards
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                                StatCard(value: "\(stats.completedCycles)", label: "完整周期", color: .blue)
+                                StatCard(value: "\(stats.manualRests)", label: "立即休息", color: .orange)
+                                StatCard(value: "\(stats.microRests)", label: "微休息", color: .green)
+                                StatCard(value: "\(stats.skippedCount)", label: "跳过次数", color: .red)
+                                StatCard(value: "\(stats.resetCount)", label: "重置次数", color: .purple)
+                                StatCard(value: stats.totalRestLabel, label: "总休息时长", color: .teal)
+                            }
+                            .padding(.vertical, 4)
+
+                            // Session list
+                            ForEach(stats.sessions.filter { $0.type != .reset }) { session in
                                 SessionRow(session: session)
                             }
+                        } header: {
+                            Text(stats.date)
+                                .font(.headline)
                         }
                     }
                 }
             }
         }
-        .frame(width: 420, height: 400)
+        .frame(width: 420, height: 420)
     }
+}
 
-    @ViewBuilder
-    private func daySummaryHeader(day: String, sessions: [Session]) -> some View {
-        let completed = sessions.filter { !$0.skipped }.count
-        HStack {
-            Text(day)
-                .font(.headline)
-            Spacer()
-            Text("共 \(sessions.count) 次  完成 \(completed) 次")
-                .font(.caption)
+struct StatCard: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundColor(color)
+            Text(label)
+                .font(.caption2)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.08))
+        .cornerRadius(8)
     }
 }
 
@@ -52,9 +76,9 @@ struct SessionRow: View {
 
     var body: some View {
         HStack {
-            Image(systemName: session.type == .rest ? "moon.zzz" : "eye.slash")
+            Image(systemName: iconName)
                 .frame(width: 20)
-                .foregroundColor(session.type == .rest ? .blue : .orange)
+                .foregroundColor(iconColor)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.typeLabel)
@@ -72,8 +96,7 @@ struct SessionRow: View {
                 if session.skipped {
                     Text("跳过")
                         .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Color.orange.opacity(0.2))
                         .foregroundColor(.orange)
                         .cornerRadius(4)
@@ -81,6 +104,22 @@ struct SessionRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+
+    private var iconName: String {
+        switch session.type {
+        case .rest:      return session.wasManualTrigger ? "bolt.fill" : "moon.zzz"
+        case .microRest: return "eye.slash"
+        case .reset:     return "arrow.clockwise"
+        }
+    }
+
+    private var iconColor: Color {
+        switch session.type {
+        case .rest:      return session.wasManualTrigger ? .orange : .blue
+        case .microRest: return .green
+        case .reset:     return .purple
+        }
     }
 
     private var timeString: String {

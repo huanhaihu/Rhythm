@@ -7,20 +7,20 @@ class OverlayWindowManager: ObservableObject {
     func show(isMicro: Bool, timerEngine: TimerEngine) {
         DispatchQueue.main.async {
             self.dismiss()
-
             guard let screen = NSScreen.main else { return }
 
+            // Use visibleFrame so the menu bar stays accessible
+            let frame = screen.visibleFrame
             let win = OverlayWindow(
-                contentRect: screen.frame,
+                contentRect: frame,
                 styleMask: [.borderless],
                 backing: .buffered,
                 defer: false
             )
-            win.level = .screenSaver
+            win.level = .floating + 1
             win.isOpaque = false
             win.backgroundColor = .clear
             win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-            win.ignoresMouseEvents = false
 
             let view = OverlayView(timerEngine: timerEngine, isMicro: isMicro)
             win.contentView = NSHostingView(rootView: view)

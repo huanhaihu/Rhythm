@@ -1,7 +1,7 @@
 import AppKit
 import AVFoundation
 
-class SoundPlayer {
+class SoundPlayer: ObservableObject {
     private let settings: Settings
     private var audioPlayer: AVAudioPlayer?
 
