@@ -1,12 +1,155 @@
 import SwiftUI
+import AppKit
+import Combine
 
-/// Holds a reference to open the settings window from the menu bar.
+// MARK: - App Router
+
 class AppRouter: ObservableObject {
     static let shared = AppRouter()
     var openMainWindow: (() -> Void)?
 }
 
-/// Checks if another instance is already running and terminates with an alert if so.
+// MARK: - App Delegate
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+
+    // All state objects live here — only one owner, no timing issues
+    private var settings: Settings?
+    private var sessionStore: SessionStore?
+    private var soundPlayer: SoundPlayer?
+    private var timerEngine: TimerEngine?
+    private var overlayManager: OverlayWindowManager?
+
+    private var statusItem: NSStatusItem?
+    private var popover: NSPopover?
+    private var mainWindow: NSWindow?
+    private var cancellable: AnyCancellable?
+    private var eventMonitor: Any?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        enforceSingleInstance()
+        UserDefaults.standard.register(defaults: ["NSQuitAlwaysKeepsWindows": false])
+
+        let s      = Settings()
+        let store  = SessionStore()
+        let sound  = SoundPlayer(settings: s)
+        let engine = TimerEngine(settings: s, sessionStore: store, soundPlayer: sound)
+        let overlay = OverlayWindowManager()
+
+        engine.onOverlayNeeded = { [weak overlay, weak engine] show, isMicro in
+            guard let overlay, let engine else { return }
+            if show { overlay.show(isMicro: isMicro, timerEngine: engine) }
+            else    { overlay.dismiss() }
+        }
+
+        settings      = s
+        sessionStore  = store
+        soundPlayer   = sound
+        timerEngine   = engine
+        overlayManager = overlay
+
+        AppRouter.shared.openMainWindow = { [weak self] in self?.openMainWindow() }
+
+        setupStatusItem()
+        setupPopover()
+    }
+
+    // MARK: - Status Item
+
+    private func setupStatusItem() {
+        guard let engine = timerEngine else { return }
+
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        guard let button = statusItem?.button else { return }
+
+        updateButton(button, title: engine.menuBarTitle)
+        button.target = self
+        button.action = #selector(togglePopover)
+
+        cancellable = engine.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self, weak button, weak engine] _ in
+                DispatchQueue.main.async {
+                    guard let self, let button, let engine else { return }
+                    self.updateButton(button, title: engine.menuBarTitle)
+                }
+            }
+    }
+
+    private func updateButton(_ button: NSStatusBarButton, title: String) {
+        let img = NSImage(systemSymbolName: "waveform", accessibilityDescription: "Rhythm")
+        img?.isTemplate = true
+        button.image = img
+        button.imagePosition = .imageLeft
+        button.title = " \(title)"
+        button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+    }
+
+    // MARK: - Popover
+
+    private func setupPopover() {
+        guard let engine = timerEngine,
+              let settings = settings,
+              let store = sessionStore else { return }
+
+        let content = MenuBarContentView()
+            .environmentObject(engine)
+            .environmentObject(settings)
+            .environmentObject(store)
+        let controller = NSHostingController(rootView: content)
+        popover = NSPopover()
+        popover?.contentViewController = controller
+        popover?.behavior = .transient
+        popover?.animates = false
+    }
+
+    @objc private func togglePopover() {
+        guard let button = statusItem?.button else { return }
+        if let popover, popover.isShown {
+            closePopover()
+        } else {
+            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                self?.closePopover()
+            }
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        if let m = eventMonitor { NSEvent.removeMonitor(m); eventMonitor = nil }
+    }
+
+    // MARK: - Main (Settings) Window
+
+    func openMainWindow() {
+        guard let engine = timerEngine,
+              let settings = settings,
+              let store = sessionStore,
+              let sound = soundPlayer else { return }
+
+        if mainWindow == nil {
+            let view = MainView()
+                .environmentObject(engine)
+                .environmentObject(settings)
+                .environmentObject(store)
+                .environmentObject(sound)
+            let controller = NSHostingController(rootView: view)
+            let window = NSWindow(contentViewController: controller)
+            window.title = "Rhythm"
+            window.setContentSize(NSSize(width: 440, height: 520))
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.center()
+            window.isReleasedWhenClosed = false
+            mainWindow = window
+        }
+        mainWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+// MARK: - Single Instance Guard
+
 private func enforceSingleInstance() {
     let bundleID = Bundle.main.bundleIdentifier ?? ""
     let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
@@ -21,93 +164,15 @@ private func enforceSingleInstance() {
     }
 }
 
-// One-shot flag: suppress the window only on first launch, not on user-requested opens
-private class LaunchSuppressor {
-    static var didSuppress = false
-}
+// MARK: - App Entry Point
 
 @main
 struct RhythmApp: App {
-    @StateObject private var settings: Settings
-    @StateObject private var sessionStore: SessionStore
-    @StateObject private var timerEngine: TimerEngine
-    @StateObject private var soundPlayer: SoundPlayer
-    @StateObject private var overlayManager: OverlayWindowManager
-
-    init() {
-        enforceSingleInstance()
-        // Disable macOS window state restoration so settings window doesn't auto-reopen
-        UserDefaults.standard.register(defaults: ["NSQuitAlwaysKeepsWindows": false])
-
-        let s = Settings()
-        let store = SessionStore()
-        let sound = SoundPlayer(settings: s)
-        let engine = TimerEngine(settings: s, sessionStore: store, soundPlayer: sound)
-        let overlay = OverlayWindowManager()
-
-        engine.onOverlayNeeded = { show, isMicro in
-            if show { overlay.show(isMicro: isMicro, timerEngine: engine) }
-            else     { overlay.dismiss() }
-        }
-
-        _settings       = StateObject(wrappedValue: s)
-        _sessionStore   = StateObject(wrappedValue: store)
-        _soundPlayer    = StateObject(wrappedValue: sound)
-        _timerEngine    = StateObject(wrappedValue: engine)
-        _overlayManager = StateObject(wrappedValue: overlay)
-    }
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        WindowGroup("Rhythm", id: "main") {
-            MainView()
-                .environmentObject(timerEngine)
-                .environmentObject(settings)
-                .environmentObject(sessionStore)
-                .environmentObject(soundPlayer)
-                .withOpenWindowCapture()
-                .onAppear {
-                    // Hide on first launch only; user-triggered opens go through normally
-                    guard !LaunchSuppressor.didSuppress else { return }
-                    LaunchSuppressor.didSuppress = true
-                    DispatchQueue.main.async {
-                        NSApp.windows
-                            .filter { $0.title == "Rhythm" }
-                            .forEach { $0.orderOut(nil) }
-                    }
-                }
-        }
-        .defaultSize(width: 440, height: 520)
-        .windowResizability(.contentSize)
-
-        // Use title+systemImage form (not label closure) — on macOS 15 the label
-        // closure form causes the icon to vanish when body re-evaluates every second.
-        MenuBarExtra(timerEngine.menuBarTitle, systemImage: "waveform") {
-            MenuBarContentView()
-                .environmentObject(timerEngine)
-                .environmentObject(settings)
-                .environmentObject(sessionStore)
-        }
-        .menuBarExtraStyle(.window)
-    }
-}
-
-// MARK: - Helper to capture openWindow from SwiftUI environment
-
-private struct OpenWindowCapture: ViewModifier {
-    @Environment(\.openWindow) private var openWindow
-
-    func body(content: Content) -> some View {
-        content.onAppear {
-            AppRouter.shared.openMainWindow = {
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
-            }
-        }
-    }
-}
-
-private extension View {
-    func withOpenWindowCapture() -> some View {
-        modifier(OpenWindowCapture())
+        // Minimal placeholder — no window is shown at launch.
+        // All UI is driven by AppDelegate (NSStatusItem + NSPopover + NSWindow).
+        SwiftUI.Settings { EmptyView() }
     }
 }

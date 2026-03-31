@@ -59,6 +59,7 @@ struct MenuBarContentView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .focusable(false)
             .help("打开设置")
         }
         .padding(.horizontal, 14)
@@ -415,13 +416,13 @@ struct MenuBarContentView: View {
 // MARK: - Menu bar label
 
 struct MenuBarLabel: View {
-    let title: String
+    @ObservedObject var engine: TimerEngine
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "waveform")
                 .imageScale(.small)
-            Text(title)
+            Text(engine.menuBarTitle)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .monospacedDigit()
         }

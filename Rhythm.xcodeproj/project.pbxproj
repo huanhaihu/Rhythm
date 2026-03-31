@@ -22,6 +22,7 @@
 		CC000000000000CCCC00000D /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00000D /* Session.swift */; };
 		CC000000000000CCCC00000E /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00000E /* SessionStore.swift */; };
 		CC000000000000CCCC00000F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00000F /* Assets.xcassets */; };
+		CC000000000000CCCC000010 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000011 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		FF000000000000FFFF00000D /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF00000E /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF00000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FF000000000000FFFF000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FF000000000000FFFF000011 /* Rhythm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rhythm.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -67,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				FF000000000000FFFF000001 /* RhythmApp.swift */,
+				FF000000000000FFFF000011 /* AppDelegate.swift */,
 				AA000000000000AAAA000003 /* Core */,
 				AA000000000000AAAA000004 /* UI */,
 				AA000000000000AAAA000005 /* Data */,
@@ -202,6 +205,7 @@
 				CC000000000000CCCC00000C /* MainView.swift in Sources */,
 				CC000000000000CCCC00000D /* Session.swift in Sources */,
 				CC000000000000CCCC00000E /* SessionStore.swift in Sources */,
+				CC000000000000CCCC000010 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
