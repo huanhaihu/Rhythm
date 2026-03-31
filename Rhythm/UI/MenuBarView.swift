@@ -1,5 +1,34 @@
 import SwiftUI
 import ServiceManagement
+import AppKit
+
+// MARK: - Blur / transparency helpers
+
+private struct SidebarBlurBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let v = NSVisualEffectView()
+        v.material = .sidebar
+        v.blendingMode = .behindWindow
+        v.state = .active
+        return v
+    }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+/// Reaches up to the hosting NSWindow and makes it transparent so the blur shows through.
+private struct WindowTransparencyConfigurator: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        DispatchQueue.main.async {
+            v.window?.backgroundColor = .clear
+            v.window?.isOpaque = false
+        }
+        return v
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+// MARK: - Main content
 
 struct MenuBarContentView: View {
     @EnvironmentObject var timerEngine: TimerEngine
@@ -18,7 +47,9 @@ struct MenuBarContentView: View {
             footerBar
         }
         .frame(width: 350)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(SidebarBlurBackground())
+        // 0-size overlay so the configurator joins the view tree without affecting layout
+        .overlay(WindowTransparencyConfigurator().frame(width: 0, height: 0))
     }
 
     // MARK: - Header
@@ -28,7 +59,7 @@ struct MenuBarContentView: View {
             ZStack {
                 Circle()
                     .fill(
-                        LinearGradient(colors: [.cyan.opacity(0.25), .purple.opacity(0.25)],
+                        LinearGradient(colors: [.cyan.opacity(0.30), .purple.opacity(0.30)],
                                        startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
                     .frame(width: 30, height: 30)
@@ -51,8 +82,8 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(Color(NSColor.controlBackgroundColor))
-        .overlay(Divider(), alignment: .bottom)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.55))
+        .overlay(Divider().opacity(0.4), alignment: .bottom)
     }
 
     private var statusBadge: some View {
@@ -60,7 +91,7 @@ struct MenuBarContentView: View {
             .font(.system(size: 11, weight: .medium))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(statusColor.opacity(0.12))
+            .background(statusColor.opacity(0.15))
             .foregroundColor(statusColor)
             .clipShape(Capsule())
     }
@@ -104,7 +135,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
         .cornerRadius(10)
     }
 
@@ -175,7 +206,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
         .cornerRadius(10)
     }
 
@@ -228,7 +259,7 @@ struct MenuBarContentView: View {
     }
 
     private var cardDivider: some View {
-        Divider().padding(.vertical, 5)
+        Divider().opacity(0.5).padding(.vertical, 5)
     }
 
     // MARK: - Records Card
@@ -268,7 +299,7 @@ struct MenuBarContentView: View {
                         }
                         .padding(.vertical, 5)
                         if index < recentSessions.count - 1 {
-                            Divider()
+                            Divider().opacity(0.5)
                         }
                     }
                 }
@@ -276,7 +307,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
         .cornerRadius(10)
     }
 
@@ -328,35 +359,22 @@ struct MenuBarContentView: View {
 
     private var footerBar: some View {
         HStack(spacing: 6) {
-            // Primary action: toggles between 开始专注 and 暂停
             footerButton(
                 timerEngine.isRunning ? "暂停" : "开始专注",
                 primary: !timerEngine.isRunning
             ) {
                 if timerEngine.isRunning { timerEngine.pause() } else { timerEngine.start() }
             }
-
-            // 立即休息 — enabled only while working
-            footerButton("立即休息",
-                         disabled: timerEngine.state != .working
-            ) {
+            footerButton("立即休息", disabled: timerEngine.state != .working) {
                 timerEngine.triggerRestNow()
             }
-
-            // 重置计时 — enabled while running
-            footerButton("重置计时",
-                         disabled: !timerEngine.isRunning
-            ) {
+            footerButton("重置计时", disabled: !timerEngine.isRunning) {
                 timerEngine.resetWithCurrentSettings()
             }
-
-            // 跳过 pill — shown only during rest/micro-rest
             if timerEngine.state == .resting || timerEngine.state == .microResting {
                 footerButton("跳过休息") { timerEngine.skipCurrentRest() }
             }
-
             Spacer()
-
             Button("退出") { NSApplication.shared.terminate(nil) }
                 .buttonStyle(.plain)
                 .font(.system(size: 12))
@@ -364,8 +382,8 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(Color(NSColor.controlBackgroundColor))
-        .overlay(Divider(), alignment: .top)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.55))
+        .overlay(Divider().opacity(0.4), alignment: .top)
     }
 
     private func footerButton(_ title: String,
@@ -377,12 +395,13 @@ struct MenuBarContentView: View {
                 .font(.system(size: 12, weight: .medium))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(primary ? Color.accentColor : Color(NSColor.controlBackgroundColor))
+                .background(primary ? Color.accentColor : Color(NSColor.controlBackgroundColor).opacity(0.5))
                 .foregroundColor(disabled ? Color.secondary.opacity(0.5) : (primary ? .white : .primary))
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(
-                            disabled ? Color.secondary.opacity(0.15) : (primary ? Color.clear : Color.primary.opacity(0.2)),
+                            disabled ? Color.secondary.opacity(0.15)
+                                     : (primary ? Color.clear : Color.primary.opacity(0.2)),
                             lineWidth: 1
                         )
                 )
@@ -411,6 +430,8 @@ struct MenuBarContentView: View {
         }
     }
 }
+
+// MARK: - Menu bar label
 
 struct MenuBarLabel: View {
     @ObservedObject var timerEngine: TimerEngine
