@@ -125,10 +125,6 @@ struct SettingsView: View {
                 }
             }
 
-            // General
-            Section("通用") {
-                Toggle("启动时自动开始计时", isOn: $settings.autoStart)
-            }
         }
         .formStyle(.grouped)
         .frame(width: 420)

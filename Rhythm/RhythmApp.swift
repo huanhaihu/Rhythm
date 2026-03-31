@@ -49,9 +49,6 @@ struct RhythmApp: App {
         _timerEngine   = StateObject(wrappedValue: engine)
         _overlayManager = StateObject(wrappedValue: overlay)
 
-        if s.autoStart {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { engine.start() }
-        }
     }
 
     var body: some Scene {
@@ -70,6 +67,7 @@ struct RhythmApp: App {
             MenuBarContentView()
                 .environmentObject(timerEngine)
                 .environmentObject(settings)
+                .environmentObject(sessionStore)
         } label: {
             MenuBarLabel(timerEngine: timerEngine)
         }
