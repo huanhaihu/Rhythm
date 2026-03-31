@@ -30,7 +30,11 @@
       "Bash(pkill:*)",
       "Bash(rm -rf /Applications/Rhythm.app)",
       "Bash(cp -Rf /Users/huanhai.hu/Rhythm/build/Build/Products/Release/Rhythm.app /Applications/Rhythm.app)",
-      "Bash(xcodebuild -project Rhythm.xcodeproj -scheme Rhythm -configuration Release -derivedDataPath build build)"
+      "Bash(xcodebuild -project Rhythm.xcodeproj -scheme Rhythm -configuration Release -derivedDataPath build build)",
+      "Bash(gh release:*)",
+      "Bash(brew install:*)",
+      "Bash(/opt/homebrew/bin/gh release:*)",
+      "Bash(wait)"
     ]
   }
 }

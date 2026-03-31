@@ -22,8 +22,21 @@ private func enforceSingleInstance() {
     }
 }
 
+/// Hides the main settings window automatically on launch.
+/// The user can still open it via "打开设置" in the menu bar.
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        DispatchQueue.main.async {
+            NSApp.windows
+                .filter { !($0 is NSPanel) }
+                .forEach { $0.orderOut(nil) }
+        }
+    }
+}
+
 @main
 struct RhythmApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var settings: Settings
     @StateObject private var sessionStore: SessionStore
     @StateObject private var timerEngine: TimerEngine
