@@ -6,6 +6,22 @@ class AppRouter: ObservableObject {
     var openMainWindow: (() -> Void)?
 }
 
+/// Checks if another instance is already running and terminates with an alert if so
+private func enforceSingleInstance() {
+    let bundleID = Bundle.main.bundleIdentifier ?? ""
+    let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+    // More than 1 means another instance exists besides us
+    if running.count > 1 {
+        let alert = NSAlert()
+        alert.messageText = "Rhythm 已在运行"
+        alert.informativeText = "Rhythm 已经在菜单栏中运行了，无需重复启动。\n请查看屏幕右上角的菜单栏图标。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好的")
+        alert.runModal()
+        NSApplication.shared.terminate(nil)
+    }
+}
+
 @main
 struct RhythmApp: App {
     @StateObject private var settings: Settings
@@ -15,6 +31,7 @@ struct RhythmApp: App {
     @StateObject private var overlayManager: OverlayWindowManager
 
     init() {
+        enforceSingleInstance()
         let s = Settings()
         let store = SessionStore()
         let sound = SoundPlayer(settings: s)
