@@ -96,6 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(engine)
             .environmentObject(settings)
             .environmentObject(store)
+            .tint(Color(nsColor: .controlAccentColor))
         let controller = NSHostingController(rootView: content)
         popover = NSPopover()
         popover?.contentViewController = controller
@@ -108,6 +109,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let popover, popover.isShown {
             closePopover()
         } else {
+            // Recreate content each open so SwiftUI renders with full window context
+            // (fixes toggle colors being gray on first render)
+            setupPopover()
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
                 self?.closePopover()

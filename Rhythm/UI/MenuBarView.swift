@@ -176,14 +176,10 @@ struct MenuBarContentView: View {
                 Text("开机启动")
                     .font(.system(size: 13))
                 Spacer()
-                Toggle("", isOn: Binding(
+                MiniToggle(isOn: Binding(
                     get: { launchAtLoginEnabled },
                     set: { setLaunchAtLogin($0) }
                 ))
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .scaleEffect(0.75, anchor: .trailing)
-                .frame(width: 42, height: 24)
             }
         }
         .padding(.horizontal, 14)
@@ -232,11 +228,7 @@ struct MenuBarContentView: View {
         HStack {
             Text(label).font(.system(size: 13))
             Spacer()
-            Toggle("", isOn: isOn)
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .scaleEffect(0.75, anchor: .trailing)
-                .frame(width: 42, height: 24)
+            MiniToggle(isOn: isOn)
         }
     }
 
@@ -410,6 +402,29 @@ struct MenuBarContentView: View {
                 try? SMAppService.mainApp.unregister()
             }
         }
+    }
+}
+
+// MARK: - Menu bar label
+
+// MARK: - Custom Toggle (uses explicit Color.blue — avoids NSHostingController tint bug)
+
+private struct MiniToggle: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        ZStack {
+            Capsule()
+                .fill(isOn ? Color.blue : Color.primary.opacity(0.2))
+                .frame(width: 32, height: 18)
+            Circle()
+                .fill(Color.white)
+                .frame(width: 14, height: 14)
+                .shadow(radius: 1)
+                .offset(x: isOn ? 7 : -7)
+        }
+        .animation(.easeInOut(duration: 0.15), value: isOn)
+        .onTapGesture { isOn.toggle() }
     }
 }
 
