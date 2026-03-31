@@ -9,18 +9,15 @@ struct MenuBarContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerBar
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 10) {
-                    timerCard
-                    settingsCard
-                    recordsCard
-                }
-                .padding(12)
+            VStack(spacing: 10) {
+                timerCard
+                settingsCard
+                recordsCard
             }
-            .frame(maxHeight: 400)
+            .padding(12)
             footerBar
         }
-        .frame(width: 320)
+        .frame(width: 350)
         .background(Color(NSColor.windowBackgroundColor))
     }
 
@@ -34,9 +31,9 @@ struct MenuBarContentView: View {
                         LinearGradient(colors: [.cyan.opacity(0.25), .purple.opacity(0.25)],
                                        startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
-                    .frame(width: 32, height: 32)
+                    .frame(width: 30, height: 30)
                 Image(systemName: "waveform")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(
                         LinearGradient(colors: [.cyan, .purple],
                                        startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -44,16 +41,16 @@ struct MenuBarContentView: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text("Rhythm")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                 Text("专注与休息节奏")
-                    .font(.system(size: 11))
+                    .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }
             Spacer()
             statusBadge
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.vertical, 9)
         .background(Color(NSColor.controlBackgroundColor))
         .overlay(Divider(), alignment: .bottom)
     }
@@ -89,33 +86,31 @@ struct MenuBarContentView: View {
     // MARK: - Timer Card
 
     private var timerCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("距离休息")
-                .font(.system(size: 13, weight: .semibold))
-
-            HStack(alignment: .bottom, spacing: 0) {
+        HStack(alignment: .center, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("距离休息")
+                    .font(.system(size: 13, weight: .semibold))
                 Text(timerDescription)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(countdownDisplay)
-                    .font(.system(size: 44, weight: .bold, design: .monospaced))
-                    .monospacedDigit()
-                    .foregroundColor(.primary)
-                    .contentTransition(.numericText())
-                    .animation(.linear(duration: 0.3), value: countdownDisplay)
             }
+            Spacer()
+            Text(countdownDisplay)
+                .font(.system(size: 40, weight: .bold, design: .monospaced))
+                .monospacedDigit()
+                .foregroundColor(.primary)
+                .contentTransition(.numericText())
+                .animation(.linear(duration: 0.3), value: countdownDisplay)
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
     }
 
     private var timerDescription: String {
         switch timerEngine.state {
-        case .idle:         return "点击「开始计时」以启动"
+        case .idle:         return "点击「开始专注」以启动"
         case .working:      return "专注进行中，加油 💪"
         case .resting:      return "好好放松一下 🌿"
         case .microResting: return "眼睛休息中，稍等片刻"
@@ -142,7 +137,7 @@ struct MenuBarContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("节奏设置")
                 .font(.system(size: 13, weight: .semibold))
-                .padding(.bottom, 10)
+                .padding(.bottom, 8)
 
             stepperRow(
                 label: "专注间隔",
@@ -152,9 +147,7 @@ struct MenuBarContentView: View {
                 onDecrement: { settings.workDuration -= 60 },
                 onIncrement: { settings.workDuration += 60 }
             )
-
             cardDivider
-
             stepperRow(
                 label: "休息时长",
                 value: "\(settings.restDuration / 60) 分钟",
@@ -163,13 +156,9 @@ struct MenuBarContentView: View {
                 onDecrement: { settings.restDuration -= 60 },
                 onIncrement: { settings.restDuration += 60 }
             )
-
             cardDivider
-
             toggleRow(label: "微休息", isOn: $settings.microRestEnabled)
-
             cardDivider
-
             HStack {
                 Text("开机启动")
                     .font(.system(size: 13))
@@ -184,42 +173,43 @@ struct MenuBarContentView: View {
                 .frame(width: 42, height: 24)
             }
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
     }
 
+    @ViewBuilder
     private func stepperRow(label: String, value: String,
                              canDecrement: Bool, canIncrement: Bool,
                              onDecrement: @escaping () -> Void,
                              onIncrement: @escaping () -> Void) -> some View {
         HStack(spacing: 0) {
-            Text(label)
-                .font(.system(size: 13))
+            Text(label).font(.system(size: 13))
             Spacer()
             HStack(spacing: 0) {
                 Button(action: onDecrement) {
                     Text("−")
-                        .font(.system(size: 17, weight: .light))
-                        .frame(width: 28, height: 28)
+                        .font(.system(size: 16, weight: .light))
+                        .frame(width: 26, height: 26)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(canDecrement ? .primary : .secondary.opacity(0.4))
+                .foregroundColor(canDecrement ? .primary : Color.secondary.opacity(0.35))
                 .disabled(!canDecrement)
 
                 Text(value)
                     .font(.system(size: 13))
-                    .frame(minWidth: 60, alignment: .center)
+                    .frame(minWidth: 58, alignment: .center)
 
                 Button(action: onIncrement) {
                     Text("+")
-                        .font(.system(size: 17, weight: .light))
-                        .frame(width: 28, height: 28)
+                        .font(.system(size: 16, weight: .light))
+                        .frame(width: 26, height: 26)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .foregroundColor(canIncrement ? .primary : .secondary.opacity(0.4))
+                .foregroundColor(canIncrement ? .primary : Color.secondary.opacity(0.35))
                 .disabled(!canIncrement)
             }
         }
@@ -227,8 +217,7 @@ struct MenuBarContentView: View {
 
     private func toggleRow(label: String, isOn: Binding<Bool>) -> some View {
         HStack {
-            Text(label)
-                .font(.system(size: 13))
+            Text(label).font(.system(size: 13))
             Spacer()
             Toggle("", isOn: isOn)
                 .toggleStyle(.switch)
@@ -239,13 +228,13 @@ struct MenuBarContentView: View {
     }
 
     private var cardDivider: some View {
-        Divider().padding(.vertical, 7)
+        Divider().padding(.vertical, 5)
     }
 
     // MARK: - Records Card
 
     private var recordsCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack {
                 Text("最近记录")
                     .font(.system(size: 13, weight: .semibold))
@@ -260,24 +249,24 @@ struct MenuBarContentView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 8)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(recentSessions.enumerated()), id: \.element.id) { index, session in
                         HStack(spacing: 6) {
                             Text(formatDate(session.startTime))
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(.secondary)
                             Spacer()
                             Text(typeLabel(session))
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
                                 .foregroundColor(typeColor(session))
                             Text(formatDuration(session.actualDuration))
-                                .font(.system(size: 12, design: .monospaced))
+                                .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(.secondary)
-                                .frame(width: 42, alignment: .trailing)
+                                .frame(width: 40, alignment: .trailing)
                         }
-                        .padding(.vertical, 6)
+                        .padding(.vertical, 5)
                         if index < recentSessions.count - 1 {
                             Divider()
                         }
@@ -285,7 +274,8 @@ struct MenuBarContentView: View {
                 }
             }
         }
-        .padding(14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
     }
@@ -294,7 +284,7 @@ struct MenuBarContentView: View {
         sessionStore.sessions
             .filter { $0.type != .reset }
             .sorted { $0.startTime > $1.startTime }
-            .prefix(5)
+            .prefix(4)
             .map { $0 }
     }
 
@@ -313,8 +303,8 @@ struct MenuBarContentView: View {
         case .reset:     return "重置"
         case .microRest: return "微休息"
         case .rest:
-            if s.skipped           { return "跳过" }
-            if s.wasManualTrigger  { return "立即休息" }
+            if s.skipped          { return "跳过" }
+            if s.wasManualTrigger { return "立即休息" }
             return "完整休息"
         }
     }
@@ -337,18 +327,36 @@ struct MenuBarContentView: View {
     // MARK: - Footer
 
     private var footerBar: some View {
-        HStack(spacing: 8) {
-            if timerEngine.isRunning {
-                footerButton("立即休息") { timerEngine.triggerRestNow() }
-                footerButton("重置计时") { timerEngine.resetWithCurrentSettings() }
-                if timerEngine.state == .microResting {
-                    footerButton("跳过微休息") { timerEngine.skipCurrentRest() }
-                }
-                footerButton("暂停") { timerEngine.pause() }
-            } else {
-                footerButton("开始计时", primary: true) { timerEngine.start() }
+        HStack(spacing: 6) {
+            // Primary action: toggles between 开始专注 and 暂停
+            footerButton(
+                timerEngine.isRunning ? "暂停" : "开始专注",
+                primary: !timerEngine.isRunning
+            ) {
+                if timerEngine.isRunning { timerEngine.pause() } else { timerEngine.start() }
             }
+
+            // 立即休息 — enabled only while working
+            footerButton("立即休息",
+                         disabled: timerEngine.state != .working
+            ) {
+                timerEngine.triggerRestNow()
+            }
+
+            // 重置计时 — enabled while running
+            footerButton("重置计时",
+                         disabled: !timerEngine.isRunning
+            ) {
+                timerEngine.resetWithCurrentSettings()
+            }
+
+            // 跳过 pill — shown only during rest/micro-rest
+            if timerEngine.state == .resting || timerEngine.state == .microResting {
+                footerButton("跳过休息") { timerEngine.skipCurrentRest() }
+            }
+
             Spacer()
+
             Button("退出") { NSApplication.shared.terminate(nil) }
                 .buttonStyle(.plain)
                 .font(.system(size: 12))
@@ -360,21 +368,28 @@ struct MenuBarContentView: View {
         .overlay(Divider(), alignment: .top)
     }
 
-    private func footerButton(_ title: String, primary: Bool = false, action: @escaping () -> Void) -> some View {
+    private func footerButton(_ title: String,
+                               primary: Bool = false,
+                               disabled: Bool = false,
+                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(primary ? Color.accentColor : Color(NSColor.controlBackgroundColor))
-                .foregroundColor(primary ? .white : .primary)
+                .foregroundColor(disabled ? Color.secondary.opacity(0.5) : (primary ? .white : .primary))
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(primary ? Color.clear : Color.primary.opacity(0.15), lineWidth: 1)
+                        .stroke(
+                            disabled ? Color.secondary.opacity(0.15) : (primary ? Color.clear : Color.primary.opacity(0.2)),
+                            lineWidth: 1
+                        )
                 )
                 .cornerRadius(6)
         }
         .buttonStyle(.plain)
+        .disabled(disabled)
     }
 
     // MARK: - Launch at Login
