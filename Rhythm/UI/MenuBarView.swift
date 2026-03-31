@@ -8,24 +8,11 @@ private struct SidebarBlurBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
         v.material = .sidebar
-        v.blendingMode = .behindWindow
+        v.blendingMode = .withinWindow
         v.state = .active
         return v
     }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}
-
-/// Reaches up to the hosting NSWindow and makes it transparent so the blur shows through.
-private struct WindowTransparencyConfigurator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let v = NSView()
-        DispatchQueue.main.async {
-            v.window?.backgroundColor = .clear
-            v.window?.isOpaque = false
-        }
-        return v
-    }
-    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 // MARK: - Main content
@@ -48,8 +35,6 @@ struct MenuBarContentView: View {
         }
         .frame(width: 350)
         .background(SidebarBlurBackground())
-        // 0-size overlay so the configurator joins the view tree without affecting layout
-        .overlay(WindowTransparencyConfigurator().frame(width: 0, height: 0))
     }
 
     // MARK: - Header

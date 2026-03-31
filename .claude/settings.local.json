@@ -34,7 +34,8 @@
       "Bash(gh release:*)",
       "Bash(brew install:*)",
       "Bash(/opt/homebrew/bin/gh release:*)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(cp -Rf build/Build/Products/Release/Rhythm.app /Applications/Rhythm.app)"
     ]
   }
 }
