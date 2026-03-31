@@ -79,13 +79,13 @@ struct RhythmApp: App {
         .defaultSize(width: 440, height: 520)
         .windowResizability(.contentSize)
 
-        MenuBarExtra {
+        // Use title+systemImage form (not label closure) — on macOS 15 the label
+        // closure form causes the icon to vanish when body re-evaluates every second.
+        MenuBarExtra(timerEngine.menuBarTitle, systemImage: "waveform") {
             MenuBarContentView()
                 .environmentObject(timerEngine)
                 .environmentObject(settings)
                 .environmentObject(sessionStore)
-        } label: {
-            MenuBarLabel(title: timerEngine.menuBarTitle)
         }
         .menuBarExtraStyle(.window)
     }
