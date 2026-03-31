@@ -415,13 +415,13 @@ struct MenuBarContentView: View {
 // MARK: - Menu bar label
 
 struct MenuBarLabel: View {
-    @ObservedObject var timerEngine: TimerEngine
+    let title: String
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "waveform")
                 .imageScale(.small)
-            Text(timerEngine.menuBarTitle)
+            Text(title)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .monospacedDigit()
         }

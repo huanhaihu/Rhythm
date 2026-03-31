@@ -21,6 +21,11 @@ private func enforceSingleInstance() {
     }
 }
 
+// One-shot flag: suppress the window only on first launch, not on user-requested opens
+private class LaunchSuppressor {
+    static var didSuppress = false
+}
+
 @main
 struct RhythmApp: App {
     @StateObject private var settings: Settings
@@ -31,6 +36,9 @@ struct RhythmApp: App {
 
     init() {
         enforceSingleInstance()
+        // Disable macOS window state restoration so settings window doesn't auto-reopen
+        UserDefaults.standard.register(defaults: ["NSQuitAlwaysKeepsWindows": false])
+
         let s = Settings()
         let store = SessionStore()
         let sound = SoundPlayer(settings: s)
@@ -47,25 +55,29 @@ struct RhythmApp: App {
         _soundPlayer    = StateObject(wrappedValue: sound)
         _timerEngine    = StateObject(wrappedValue: engine)
         _overlayManager = StateObject(wrappedValue: overlay)
-
-        // Wire up the settings opener using the macOS settings selector
-        // (Settings scene never auto-opens on launch)
-        AppRouter.shared.openMainWindow = {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            NSApp.activate(ignoringOtherApps: true)
-        }
     }
 
     var body: some Scene {
-        // SwiftUI.Settings scene: opens only on demand (⌘, or "打开设置" button).
-        // Unlike WindowGroup it does NOT auto-open on app launch.
-        SwiftUI.Settings {
+        WindowGroup("Rhythm", id: "main") {
             MainView()
                 .environmentObject(timerEngine)
                 .environmentObject(settings)
                 .environmentObject(sessionStore)
                 .environmentObject(soundPlayer)
+                .withOpenWindowCapture()
+                .onAppear {
+                    // Hide on first launch only; user-triggered opens go through normally
+                    guard !LaunchSuppressor.didSuppress else { return }
+                    LaunchSuppressor.didSuppress = true
+                    DispatchQueue.main.async {
+                        NSApp.windows
+                            .filter { $0.title == "Rhythm" }
+                            .forEach { $0.orderOut(nil) }
+                    }
+                }
         }
+        .defaultSize(width: 440, height: 520)
+        .windowResizability(.contentSize)
 
         MenuBarExtra {
             MenuBarContentView()
@@ -73,8 +85,29 @@ struct RhythmApp: App {
                 .environmentObject(settings)
                 .environmentObject(sessionStore)
         } label: {
-            MenuBarLabel(timerEngine: timerEngine)
+            MenuBarLabel(title: timerEngine.menuBarTitle)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+// MARK: - Helper to capture openWindow from SwiftUI environment
+
+private struct OpenWindowCapture: ViewModifier {
+    @Environment(\.openWindow) private var openWindow
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            AppRouter.shared.openMainWindow = {
+                openWindow(id: "main")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
+    }
+}
+
+private extension View {
+    func withOpenWindowCapture() -> some View {
+        modifier(OpenWindowCapture())
     }
 }
