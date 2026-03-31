@@ -3,13 +3,13 @@ import SwiftUI
 
 class OverlayWindowManager: ObservableObject {
     private var window: OverlayWindow?
+    private var escMonitor: Any?
 
     func show(isMicro: Bool, timerEngine: TimerEngine) {
         DispatchQueue.main.async {
             self.dismiss()
             guard let screen = NSScreen.main else { return }
 
-            // Use visibleFrame so the menu bar stays accessible
             let frame = screen.visibleFrame
             let win = OverlayWindow(
                 contentRect: frame,
@@ -26,16 +26,22 @@ class OverlayWindowManager: ObservableObject {
             win.contentView = NSHostingView(rootView: view)
             win.onEscape = { timerEngine.skipCurrentRest() }
 
+            // Use a local event monitor for ESC so we don't need to make the window key
+            // (making key/main was disrupting the MenuBarExtra icon)
+            self.escMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak win] event in
+                if event.keyCode == 53 { win?.onEscape?(); return nil }
+                return event
+            }
+
             self.window = win
-            // orderFrontRegardless avoids forcing app activation (which disrupts the MenuBarExtra)
+            // orderFrontRegardless shows without forcing app activation or becoming main window
             win.orderFrontRegardless()
-            // Make key separately so ESC works, without triggering app-activate side-effects
-            win.makeKey()
         }
     }
 
     func dismiss() {
         DispatchQueue.main.async {
+            if let m = self.escMonitor { NSEvent.removeMonitor(m); self.escMonitor = nil }
             self.window?.orderOut(nil)
             self.window = nil
         }

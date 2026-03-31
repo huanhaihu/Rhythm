@@ -1,21 +1,5 @@
 import SwiftUI
 import ServiceManagement
-import AppKit
-
-// MARK: - Blur / transparency helpers
-
-private struct SidebarBlurBackground: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let v = NSVisualEffectView()
-        v.material = .sidebar
-        v.blendingMode = .withinWindow
-        v.state = .active
-        return v
-    }
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}
-
-// MARK: - Main content
 
 struct MenuBarContentView: View {
     @EnvironmentObject var timerEngine: TimerEngine
@@ -25,7 +9,7 @@ struct MenuBarContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerBar
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 timerCard
                 settingsCard
                 recordsCard
@@ -34,7 +18,8 @@ struct MenuBarContentView: View {
             footerBar
         }
         .frame(width: 350)
-        .background(SidebarBlurBackground())
+        // Use SwiftUI-native material — more stable than NSVisualEffectView inside MenuBarExtra
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Header
@@ -78,7 +63,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.55))
+        .background(.thinMaterial)
         .overlay(Divider().opacity(0.4), alignment: .bottom)
     }
 
@@ -131,7 +116,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+        .background(.regularMaterial)
         .cornerRadius(10)
     }
 
@@ -202,7 +187,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+        .background(.regularMaterial)
         .cornerRadius(10)
     }
 
@@ -303,7 +288,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+        .background(.regularMaterial)
         .cornerRadius(10)
     }
 
@@ -378,7 +363,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.55))
+        .background(.thinMaterial)
         .overlay(Divider().opacity(0.4), alignment: .top)
     }
 
@@ -391,13 +376,13 @@ struct MenuBarContentView: View {
                 .font(.system(size: 12, weight: .medium))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(primary ? Color.accentColor : Color(NSColor.controlBackgroundColor).opacity(0.5))
-                .foregroundColor(disabled ? Color.secondary.opacity(0.5) : (primary ? .white : .primary))
+                .background(primary ? Color.accentColor : Color.primary.opacity(0.06))
+                .foregroundColor(disabled ? Color.secondary.opacity(0.4) : (primary ? .white : .primary))
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(
-                            disabled ? Color.secondary.opacity(0.15)
-                                     : (primary ? Color.clear : Color.primary.opacity(0.2)),
+                            disabled ? Color.secondary.opacity(0.12)
+                                     : (primary ? Color.clear : Color.primary.opacity(0.15)),
                             lineWidth: 1
                         )
                 )
