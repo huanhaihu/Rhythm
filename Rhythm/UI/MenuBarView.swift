@@ -64,6 +64,17 @@ struct MenuBarContentView: View {
             }
             Spacer()
             statusBadge
+            Button {
+                AppRouter.shared.openMainWindow?()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .frame(width: 26, height: 26)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("打开设置")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)

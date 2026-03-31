@@ -27,7 +27,10 @@ class OverlayWindowManager: ObservableObject {
             win.onEscape = { timerEngine.skipCurrentRest() }
 
             self.window = win
-            win.makeKeyAndOrderFront(nil)
+            // orderFrontRegardless avoids forcing app activation (which disrupts the MenuBarExtra)
+            win.orderFrontRegardless()
+            // Make key separately so ESC works, without triggering app-activate side-effects
+            win.makeKey()
         }
     }
 
