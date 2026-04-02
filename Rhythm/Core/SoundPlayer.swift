@@ -10,20 +10,28 @@ class SoundPlayer: ObservableObject {
     }
 
     func playAlert() {
-        play(soundName: settings.alertSound)
+        play(soundName: settings.alertSound, customPath: settings.customSoundPath)
     }
 
     func playMicroAlert() {
-        play(soundName: settings.microAlertSound)
+        play(soundName: settings.microAlertSound, customPath: settings.customMicroSoundPath)
     }
 
     func preview(soundName: String) {
         play(soundName: soundName)
     }
 
-    private func play(soundName: String) {
-        if soundName == "custom" && !settings.customSoundPath.isEmpty {
-            let url = URL(fileURLWithPath: settings.customSoundPath)
+    func previewFile(path: String) {
+        let url = URL(fileURLWithPath: path)
+        if let player = try? AVAudioPlayer(contentsOf: url) {
+            audioPlayer = player
+            player.play()
+        }
+    }
+
+    private func play(soundName: String, customPath: String = "") {
+        if soundName == "custom" && !customPath.isEmpty {
+            let url = URL(fileURLWithPath: customPath)
             if let player = try? AVAudioPlayer(contentsOf: url) {
                 audioPlayer = player
                 player.play()

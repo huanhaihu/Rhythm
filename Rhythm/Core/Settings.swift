@@ -11,6 +11,7 @@ class Settings: ObservableObject {
     @AppStorage("alertSound")            var alertSound: String = "Glass"
     @AppStorage("microAlertSound")       var microAlertSound: String = "Ping"
     @AppStorage("customSoundPath")       var customSoundPath: String = ""
+    @AppStorage("customMicroSoundPath")  var customMicroSoundPath: String = ""
 
     static let systemSounds = [
         "Basso", "Blow", "Bottle", "Frog", "Funk",

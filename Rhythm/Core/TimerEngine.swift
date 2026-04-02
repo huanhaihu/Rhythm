@@ -3,6 +3,7 @@ import Foundation
 enum TimerState: Equatable {
     case idle
     case working
+    case paused      // timer stopped, workSecondsRemaining preserved
     case resting
     case microResting
 }
@@ -44,15 +45,23 @@ class TimerEngine: ObservableObject {
     }
 
     func pause() {
+        guard state == .working else { return }
         mainTimer?.invalidate(); mainTimer = nil
         microRestTimer?.invalidate(); microRestTimer = nil
-        state = .idle
-        workSecondsRemaining = 0
-        restSecondsRemaining = 0
+        state = .paused
+        // workSecondsRemaining is preserved so resume can continue from here
+    }
+
+    func resume() {
+        guard state == .paused else { return }
+        state = .working
+        startMainTimer()
+        scheduleNextMicroRest()
     }
 
     /// 一键重置：用当前设置重新开始
     func resetWithCurrentSettings() {
+        guard state != .idle else { return }
         mainTimer?.invalidate(); mainTimer = nil
         microRestTimer?.invalidate(); microRestTimer = nil
         onOverlayNeeded?(false, false)
@@ -79,7 +88,11 @@ class TimerEngine: ObservableObject {
 
     var menuBarTitle: String {
         switch state {
-        case .idle:         return "已暂停"
+        case .idle:    return "已暂停"
+        case .paused:
+            let m = workSecondsRemaining / 60
+            let s = workSecondsRemaining % 60
+            return "⏸ \(String(format: "%d:%02d", m, s))"
         case .working:
             let m = workSecondsRemaining / 60
             let s = workSecondsRemaining % 60
@@ -93,7 +106,8 @@ class TimerEngine: ObservableObject {
         }
     }
 
-    var isRunning: Bool { state != .idle }
+    var isRunning: Bool { state == .working || state == .resting || state == .microResting }
+    var isPaused: Bool  { state == .paused }
 
     var plannedDuration: Int { plannedRestDuration }
 
@@ -117,7 +131,7 @@ class TimerEngine: ObservableObject {
         case .microResting:
             if restSecondsRemaining > 0 { restSecondsRemaining -= 1 }
             else { finishMicroRest(skipped: false) }
-        case .idle: break
+        case .idle, .paused: break
         }
     }
 
@@ -186,11 +200,17 @@ class TimerEngine: ObservableObject {
     }
 
     private func handleScreenLocked() {
+        guard state != .idle && state != .paused else { return }
         mainTimer?.invalidate(); mainTimer = nil
         microRestTimer?.invalidate(); microRestTimer = nil
         onOverlayNeeded?(false, false)
-        state = .idle
-        workSecondsRemaining = 0
-        restSecondsRemaining = 0
+        // Preserve remaining work time as paused rather than fully resetting
+        if state == .working {
+            state = .paused
+        } else {
+            state = .idle
+            workSecondsRemaining = 0
+            restSecondsRemaining = 0
+        }
     }
 }

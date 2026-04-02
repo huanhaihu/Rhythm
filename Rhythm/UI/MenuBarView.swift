@@ -81,6 +81,7 @@ struct MenuBarContentView: View {
     private var statusText: String {
         switch timerEngine.state {
         case .idle:         return "已暂停"
+        case .paused:       return "已暂停"
         case .working:      return "专注中"
         case .resting:      return "休息中"
         case .microResting: return "微休息"
@@ -89,10 +90,10 @@ struct MenuBarContentView: View {
 
     private var statusColor: Color {
         switch timerEngine.state {
-        case .idle:         return .secondary
-        case .working:      return .blue
-        case .resting:      return .green
-        case .microResting: return .orange
+        case .idle, .paused: return .secondary
+        case .working:       return .blue
+        case .resting:       return .green
+        case .microResting:  return .orange
         }
     }
 
@@ -124,6 +125,7 @@ struct MenuBarContentView: View {
     private var timerDescription: String {
         switch timerEngine.state {
         case .idle:         return "点击「开始专注」以启动"
+        case .paused:       return "已暂停，点击「继续专注」恢复"
         case .working:      return "专注进行中，加油 💪"
         case .resting:      return "好好放松一下 🌿"
         case .microResting: return "眼睛休息中，稍等片刻"
@@ -135,7 +137,7 @@ struct MenuBarContentView: View {
         case .idle:
             let s = settings.workDuration
             return String(format: "%d:%02d", s / 60, s % 60)
-        case .working:
+        case .paused, .working:
             let s = timerEngine.workSecondsRemaining
             return String(format: "%d:%02d", s / 60, s % 60)
         case .resting, .microResting:
@@ -204,6 +206,7 @@ struct MenuBarContentView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .focusable(false)
                 .foregroundColor(canDecrement ? .primary : Color.secondary.opacity(0.35))
                 .disabled(!canDecrement)
 
@@ -218,6 +221,7 @@ struct MenuBarContentView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .focusable(false)
                 .foregroundColor(canIncrement ? .primary : Color.secondary.opacity(0.35))
                 .disabled(!canIncrement)
             }
@@ -333,16 +337,20 @@ struct MenuBarContentView: View {
 
     private var footerBar: some View {
         HStack(spacing: 6) {
-            footerButton(
-                timerEngine.isRunning ? "暂停" : "开始专注",
-                primary: !timerEngine.isRunning
-            ) {
-                if timerEngine.isRunning { timerEngine.pause() } else { timerEngine.start() }
+            // 主按钮：开始专注 / 继续专注 / 暂停
+            Group {
+                if timerEngine.isPaused {
+                    footerButton("继续专注", primary: true) { timerEngine.resume() }
+                } else if timerEngine.isRunning {
+                    footerButton("暂停") { timerEngine.pause() }
+                } else {
+                    footerButton("开始专注", primary: true) { timerEngine.start() }
+                }
             }
             footerButton("立即休息", disabled: timerEngine.state != .working) {
                 timerEngine.triggerRestNow()
             }
-            footerButton("重置计时", disabled: !timerEngine.isRunning) {
+            footerButton("重置计时", disabled: !timerEngine.isRunning && !timerEngine.isPaused) {
                 timerEngine.resetWithCurrentSettings()
             }
             if timerEngine.state == .resting || timerEngine.state == .microResting {
@@ -382,6 +390,7 @@ struct MenuBarContentView: View {
                 .cornerRadius(6)
         }
         .buttonStyle(.plain)
+        .focusable(false)
         .disabled(disabled)
     }
 
