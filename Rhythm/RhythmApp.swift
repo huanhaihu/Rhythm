@@ -6,7 +6,7 @@ import Combine
 
 class AppRouter: ObservableObject {
     static let shared = AppRouter()
-    var openMainWindow: (() -> Void)?
+    var openMainWindow: ((_ tab: Int) -> Void)?
 }
 
 // MARK: - App Delegate
@@ -16,6 +16,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // All state objects live here — only one owner, no timing issues
     private var settings: Settings?
     private var sessionStore: SessionStore?
+    private var wordStore: WordStore?
+    private var checkinStore: CheckinStore?
     private var soundPlayer: SoundPlayer?
     private var timerEngine: TimerEngine?
     private var overlayManager: OverlayWindowManager?
@@ -32,6 +34,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let s      = Settings()
         let store  = SessionStore()
+        let words  = WordStore()
+        let checkin = CheckinStore()
         let sound  = SoundPlayer(settings: s)
         let engine = TimerEngine(settings: s, sessionStore: store, soundPlayer: sound)
         let overlay = OverlayWindowManager()
@@ -44,11 +48,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         settings      = s
         sessionStore  = store
+        wordStore     = words
+        checkinStore  = checkin
         soundPlayer   = sound
         timerEngine   = engine
         overlayManager = overlay
 
-        AppRouter.shared.openMainWindow = { [weak self] in self?.openMainWindow() }
+        AppRouter.shared.openMainWindow = { [weak self] tab in self?.openMainWindow(tab: tab) }
 
         setupStatusItem()
         setupPopover()
@@ -92,10 +98,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
               let settings = settings,
               let store = sessionStore else { return }
 
+        guard let words = wordStore,
+              let checkin = checkinStore else { return }
         let content = MenuBarContentView()
             .environmentObject(engine)
             .environmentObject(settings)
             .environmentObject(store)
+            .environmentObject(words)
+            .environmentObject(checkin)
             .tint(Color(nsColor: .controlAccentColor))
         let controller = NSHostingController(rootView: content)
         popover = NSPopover()
@@ -126,26 +136,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Main (Settings) Window
 
-    func openMainWindow() {
+    private var mainViewSelectedTab = 0
+
+    func openMainWindow(tab: Int = 0) {
         guard let engine = timerEngine,
               let settings = settings,
               let store = sessionStore,
+              let words = wordStore,
+              let checkin = checkinStore,
               let sound = soundPlayer else { return }
 
+        mainViewSelectedTab = tab
+
         if mainWindow == nil {
-            let view = MainView()
+            let view = MainView(initialTab: tab)
                 .environmentObject(engine)
                 .environmentObject(settings)
                 .environmentObject(store)
+                .environmentObject(words)
+                .environmentObject(checkin)
                 .environmentObject(sound)
             let controller = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: controller)
             window.title = "Rhythm"
-            window.setContentSize(NSSize(width: 440, height: 520))
+            window.setContentSize(NSSize(width: 440, height: 560))
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.center()
             window.isReleasedWhenClosed = false
             mainWindow = window
+        } else {
+            let view = MainView(initialTab: tab)
+                .environmentObject(engine)
+                .environmentObject(settings)
+                .environmentObject(store)
+                .environmentObject(words)
+                .environmentObject(checkin)
+                .environmentObject(sound)
+            mainWindow?.contentViewController = NSHostingController(rootView: view)
         }
         mainWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

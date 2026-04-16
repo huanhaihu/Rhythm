@@ -59,17 +59,15 @@ class TimerEngine: ObservableObject {
         scheduleNextMicroRest()
     }
 
-    /// 一键重置：用当前设置重新开始
+    /// 一键重置：用当前设置重置，不自动开始
     func resetWithCurrentSettings() {
         guard state != .idle else { return }
         mainTimer?.invalidate(); mainTimer = nil
         microRestTimer?.invalidate(); microRestTimer = nil
         onOverlayNeeded?(false, false)
         sessionStore.recordReset()
-        state = .working
+        state = .idle
         workSecondsRemaining = settings.workDuration
-        startMainTimer()
-        scheduleNextMicroRest()
     }
 
     func skipCurrentRest() {
@@ -110,6 +108,13 @@ class TimerEngine: ObservableObject {
     var isPaused: Bool  { state == .paused }
 
     var plannedDuration: Int { plannedRestDuration }
+
+    var todayManualRestsCount: Int {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        let today = fmt.string(from: Date())
+        return sessionStore.dayStats.first(where: { $0.date == today })?.manualRests ?? 0
+    }
 
     // MARK: - Private
 

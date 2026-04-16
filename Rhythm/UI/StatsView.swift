@@ -45,7 +45,7 @@ struct StatsView: View {
                 }
             }
         }
-        .frame(width: 420, height: 420)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

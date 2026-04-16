@@ -1,17 +1,27 @@
 import SwiftUI
-import ServiceManagement
 
 struct MenuBarContentView: View {
     @EnvironmentObject var timerEngine: TimerEngine
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var sessionStore: SessionStore
+    @EnvironmentObject var checkinStore: CheckinStore
+
+    @State private var showImmediateBreakAlert = false
+
+    private var isResting: Bool {
+        timerEngine.state == .resting || timerEngine.state == .microResting
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             headerBar
             VStack(spacing: 8) {
                 timerCard
-                settingsCard
+                if isResting {
+                    FlashcardCard()
+                } else {
+                    TranslateCard()
+                }
                 recordsCard
             }
             .padding(12)
@@ -20,6 +30,12 @@ struct MenuBarContentView: View {
         .frame(width: 350)
         // Use SwiftUI-native material — more stable than NSVisualEffectView inside MenuBarExtra
         .background(.ultraThinMaterial)
+        .alert("今日已使用立即休息", isPresented: $showImmediateBreakAlert) {
+            Button("确认") { /* user confirms skipping — do nothing */ }
+            Button("取消", role: .cancel) { timerEngine.triggerRestNow() }
+        } message: {
+            Text("您今天已使用过 \(timerEngine.todayManualRestsCount) 次立即休息。确认则跳过本次，取消则立即开始休息。")
+        }
     }
 
     // MARK: - Header
@@ -50,7 +66,7 @@ struct MenuBarContentView: View {
             Spacer()
             statusBadge
             Button {
-                AppRouter.shared.openMainWindow?()
+                AppRouter.shared.openMainWindow?(0)
             } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13))
@@ -100,21 +116,53 @@ struct MenuBarContentView: View {
     // MARK: - Timer Card
 
     private var timerCard: some View {
-        HStack(alignment: .center, spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("距离休息")
-                    .font(.system(size: 13, weight: .semibold))
-                Text(timerDescription)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 0) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("距离休息")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(timerDescription)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Text(countdownDisplay)
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .monospacedDigit()
+                    .foregroundColor(.primary)
+                    .contentTransition(.numericText())
+                    .animation(.linear(duration: 0.3), value: countdownDisplay)
             }
-            Spacer()
-            Text(countdownDisplay)
-                .font(.system(size: 40, weight: .bold, design: .monospaced))
-                .monospacedDigit()
-                .foregroundColor(.primary)
-                .contentTransition(.numericText())
-                .animation(.linear(duration: 0.3), value: countdownDisplay)
+
+            Divider().opacity(0.4).padding(.vertical, 8)
+
+            HStack(spacing: 8) {
+                Button {
+                    checkinStore.todayChecked.toggle()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: checkinStore.todayChecked ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(checkinStore.todayChecked ? .green : .secondary.opacity(0.5))
+                        Text("今日健身")
+                            .font(.system(size: 12))
+                            .foregroundColor(checkinStore.todayChecked ? .primary : .secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+
+                if checkinStore.currentStreak > 0 {
+                    Text("连续 \(checkinStore.currentStreak) 天")
+                        .font(.system(size: 10, weight: .medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .clipShape(Capsule())
+                }
+                Spacer()
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -144,100 +192,6 @@ struct MenuBarContentView: View {
             let s = timerEngine.restSecondsRemaining
             return String(format: "%d:%02d", s / 60, s % 60)
         }
-    }
-
-    // MARK: - Settings Card
-
-    private var settingsCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("节奏设置")
-                .font(.system(size: 13, weight: .semibold))
-                .padding(.bottom, 8)
-
-            stepperRow(
-                label: "专注间隔",
-                value: "\(settings.workDuration / 60) 分钟",
-                canDecrement: settings.workDuration > 5 * 60,
-                canIncrement: settings.workDuration < 120 * 60,
-                onDecrement: { settings.workDuration -= 60 },
-                onIncrement: { settings.workDuration += 60 }
-            )
-            cardDivider
-            stepperRow(
-                label: "休息时长",
-                value: "\(settings.restDuration / 60) 分钟",
-                canDecrement: settings.restDuration > 60,
-                canIncrement: settings.restDuration < 30 * 60,
-                onDecrement: { settings.restDuration -= 60 },
-                onIncrement: { settings.restDuration += 60 }
-            )
-            cardDivider
-            toggleRow(label: "微休息", isOn: $settings.microRestEnabled)
-            cardDivider
-            HStack {
-                Text("开机启动")
-                    .font(.system(size: 13))
-                Spacer()
-                MiniToggle(isOn: Binding(
-                    get: { launchAtLoginEnabled },
-                    set: { setLaunchAtLogin($0) }
-                ))
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .cornerRadius(10)
-    }
-
-    @ViewBuilder
-    private func stepperRow(label: String, value: String,
-                             canDecrement: Bool, canIncrement: Bool,
-                             onDecrement: @escaping () -> Void,
-                             onIncrement: @escaping () -> Void) -> some View {
-        HStack(spacing: 0) {
-            Text(label).font(.system(size: 13))
-            Spacer()
-            HStack(spacing: 0) {
-                Button(action: onDecrement) {
-                    Text("−")
-                        .font(.system(size: 16, weight: .light))
-                        .frame(width: 26, height: 26)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .foregroundColor(canDecrement ? .primary : Color.secondary.opacity(0.35))
-                .disabled(!canDecrement)
-
-                Text(value)
-                    .font(.system(size: 13))
-                    .frame(minWidth: 58, alignment: .center)
-
-                Button(action: onIncrement) {
-                    Text("+")
-                        .font(.system(size: 16, weight: .light))
-                        .frame(width: 26, height: 26)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .focusable(false)
-                .foregroundColor(canIncrement ? .primary : Color.secondary.opacity(0.35))
-                .disabled(!canIncrement)
-            }
-        }
-    }
-
-    private func toggleRow(label: String, isOn: Binding<Bool>) -> some View {
-        HStack {
-            Text(label).font(.system(size: 13))
-            Spacer()
-            MiniToggle(isOn: isOn)
-        }
-    }
-
-    private var cardDivider: some View {
-        Divider().opacity(0.5).padding(.vertical, 5)
     }
 
     // MARK: - Records Card
@@ -293,7 +247,7 @@ struct MenuBarContentView: View {
         sessionStore.sessions
             .filter { $0.type != .reset }
             .sorted { $0.startTime > $1.startTime }
-            .prefix(4)
+            .prefix(1)
             .map { $0 }
     }
 
@@ -348,7 +302,11 @@ struct MenuBarContentView: View {
                 }
             }
             footerButton("立即休息", disabled: timerEngine.state != .working) {
-                timerEngine.triggerRestNow()
+                if timerEngine.todayManualRestsCount >= 1 {
+                    showImmediateBreakAlert = true
+                } else {
+                    timerEngine.triggerRestNow()
+                }
             }
             footerButton("重置计时", disabled: !timerEngine.isRunning && !timerEngine.isPaused) {
                 timerEngine.resetWithCurrentSettings()
@@ -357,15 +315,30 @@ struct MenuBarContentView: View {
                 footerButton("跳过休息") { timerEngine.skipCurrentRest() }
             }
             Spacer()
-            Button("退出") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
+            iconButton(systemName: "chart.bar.xaxis", help: "统计") {
+                AppRouter.shared.openMainWindow?(1)
+            }
+            iconButton(systemName: "power", help: "退出") {
+                NSApplication.shared.terminate(nil)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
         .background(.thinMaterial)
         .overlay(Divider().opacity(0.4), alignment: .top)
+    }
+
+    private func iconButton(systemName: String, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .help(help)
     }
 
     private func footerButton(_ title: String,
@@ -394,47 +367,6 @@ struct MenuBarContentView: View {
         .disabled(disabled)
     }
 
-    // MARK: - Launch at Login
-
-    private var launchAtLoginEnabled: Bool {
-        if #available(macOS 13.0, *) {
-            return SMAppService.mainApp.status == .enabled
-        }
-        return false
-    }
-
-    private func setLaunchAtLogin(_ enabled: Bool) {
-        if #available(macOS 13.0, *) {
-            if enabled {
-                try? SMAppService.mainApp.register()
-            } else {
-                try? SMAppService.mainApp.unregister()
-            }
-        }
-    }
-}
-
-// MARK: - Menu bar label
-
-// MARK: - Custom Toggle (uses explicit Color.blue — avoids NSHostingController tint bug)
-
-private struct MiniToggle: View {
-    @Binding var isOn: Bool
-
-    var body: some View {
-        ZStack {
-            Capsule()
-                .fill(isOn ? Color.blue : Color.primary.opacity(0.2))
-                .frame(width: 32, height: 18)
-            Circle()
-                .fill(Color.white)
-                .frame(width: 14, height: 14)
-                .shadow(radius: 1)
-                .offset(x: isOn ? 7 : -7)
-        }
-        .animation(.easeInOut(duration: 0.15), value: isOn)
-        .onTapGesture { isOn.toggle() }
-    }
 }
 
 // MARK: - Menu bar label
