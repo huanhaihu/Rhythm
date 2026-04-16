@@ -21,6 +21,7 @@ struct CheckinStatsView: View {
         HStack(spacing: 10) {
             statTile(label: "本月打卡", value: "\(checkinStore.monthCheckinCount)", tint: .green)
             statTile(label: "连续天数", value: "\(checkinStore.currentStreak)", tint: .orange)
+            statTile(label: "总共打卡", value: "\(checkinStore.totalCount)", tint: .blue)
             statTile(label: "今日", value: checkinStore.todayChecked ? "已打卡" : "未打卡",
                      tint: checkinStore.todayChecked ? .green : .secondary)
         }

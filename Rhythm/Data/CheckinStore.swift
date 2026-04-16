@@ -42,6 +42,8 @@ final class CheckinStore: ObservableObject {
         return streak
     }
 
+    var totalCount: Int { checkins.values.filter { $0 }.count }
+
     var monthCheckinCount: Int {
         let cal = Calendar.current
         let now = Date()

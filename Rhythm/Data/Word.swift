@@ -14,8 +14,37 @@ struct Word: Identifiable, Codable, Equatable {
     var retired: Bool        // user chose "完全掌握", won't appear in review
 
     enum Direction: String, Codable {
-        case enToCn // user typed English → show English front, Chinese back
-        case cnToEn // user typed Chinese → show Chinese front, English back
+        case enToCn
+        case cnToEn
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, english, chinese, direction, firstSeen, lastSeen
+        case lookupCount, box, nextDueDate, lastReviewed, retired
+    }
+
+    init(id: UUID, english: String, chinese: String, direction: Direction,
+         firstSeen: Date, lastSeen: Date, lookupCount: Int, box: Int,
+         nextDueDate: Date, lastReviewed: Date?, retired: Bool) {
+        self.id = id; self.english = english; self.chinese = chinese
+        self.direction = direction; self.firstSeen = firstSeen; self.lastSeen = lastSeen
+        self.lookupCount = lookupCount; self.box = box; self.nextDueDate = nextDueDate
+        self.lastReviewed = lastReviewed; self.retired = retired
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id          = try c.decode(UUID.self, forKey: .id)
+        english     = try c.decode(String.self, forKey: .english)
+        chinese     = try c.decode(String.self, forKey: .chinese)
+        direction   = try c.decodeIfPresent(Direction.self, forKey: .direction) ?? .enToCn
+        firstSeen   = try c.decode(Date.self, forKey: .firstSeen)
+        lastSeen    = try c.decode(Date.self, forKey: .lastSeen)
+        lookupCount = try c.decode(Int.self, forKey: .lookupCount)
+        box         = try c.decode(Int.self, forKey: .box)
+        nextDueDate = try c.decode(Date.self, forKey: .nextDueDate)
+        lastReviewed = try c.decodeIfPresent(Date.self, forKey: .lastReviewed)
+        retired     = try c.decodeIfPresent(Bool.self, forKey: .retired) ?? false
     }
 
     // Leitner intervals: box determines how long until next review cycle
