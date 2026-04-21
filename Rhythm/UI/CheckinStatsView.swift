@@ -2,15 +2,17 @@ import SwiftUI
 
 struct CheckinStatsView: View {
     @EnvironmentObject var checkinStore: CheckinStore
+    @EnvironmentObject var noteReviewStore: NoteReviewStore
     @State private var displayMonth: Date = Date()
 
     private let calendar = Calendar.current
     private let weekdays = ["日", "一", "二", "三", "四", "五", "六"]
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             statsHeader
             calendarView
+            legend
             Spacer()
         }
         .padding(18)
@@ -18,12 +20,17 @@ struct CheckinStatsView: View {
     }
 
     private var statsHeader: some View {
-        HStack(spacing: 10) {
-            statTile(label: "本月打卡", value: "\(checkinStore.monthCheckinCount)", tint: .green)
-            statTile(label: "连续天数", value: "\(checkinStore.currentStreak)", tint: .orange)
-            statTile(label: "总共打卡", value: "\(checkinStore.totalCount)", tint: .blue)
-            statTile(label: "今日", value: checkinStore.todayChecked ? "已打卡" : "未打卡",
-                     tint: checkinStore.todayChecked ? .green : .secondary)
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                statTile(label: "本月健身", value: "\(checkinStore.monthCheckinCount)", tint: .green)
+                statTile(label: "健身连续", value: "\(checkinStore.currentStreak)", tint: .green)
+                statTile(label: "总健身", value: "\(checkinStore.totalCount)", tint: .green)
+            }
+            HStack(spacing: 8) {
+                statTile(label: "本月笔记", value: "\(noteReviewStore.monthReviewCount)", tint: .blue)
+                statTile(label: "笔记连续", value: "\(noteReviewStore.currentStreak)", tint: .blue)
+                statTile(label: "总笔记", value: "\(noteReviewStore.totalCount)", tint: .blue)
+            }
         }
     }
 
@@ -84,24 +91,51 @@ struct CheckinStatsView: View {
                 ForEach(daysInMonth, id: \.self) { date in
                     if let date {
                         let checked = checkinStore.isChecked(date)
+                        let reviewed = noteReviewStore.isReviewed(date)
                         let isToday = calendar.isDateInToday(date)
+                        let anyActive = checked || reviewed
                         ZStack {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(checked ? Color.green.opacity(0.25) : Color.clear)
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(isToday ? Color.accentColor : Color.clear, lineWidth: 1.5)
-                            Text("\(calendar.component(.day, from: date))")
-                                .font(.system(size: 12, weight: checked ? .semibold : .regular))
-                                .foregroundColor(checked ? .green : .primary)
+                                .stroke(isToday ? Color.accentColor.opacity(0.6) : Color.clear, lineWidth: 1.5)
+                            VStack(spacing: 2) {
+                                Text("\(calendar.component(.day, from: date))")
+                                    .font(.system(size: 12, weight: anyActive ? .semibold : .regular))
+                                    .foregroundColor(.primary)
+                                HStack(spacing: 3) {
+                                    Circle()
+                                        .fill(Color.green)
+                                        .frame(width: 4, height: 4)
+                                        .opacity(checked ? 1 : 0)
+                                    Circle()
+                                        .fill(Color.blue)
+                                        .frame(width: 4, height: 4)
+                                        .opacity(reviewed ? 1 : 0)
+                                }
+                                .frame(height: 5)
+                            }
                         }
-                        .frame(height: 30)
+                        .frame(height: 34)
                     } else {
-                        Color.clear.frame(height: 30)
+                        Color.clear.frame(height: 34)
                     }
                 }
             }
             .background(.regularMaterial)
             .cornerRadius(8)
+        }
+    }
+
+    private var legend: some View {
+        HStack(spacing: 14) {
+            HStack(spacing: 5) {
+                Circle().fill(Color.green).frame(width: 6, height: 6)
+                Text("健身").font(.system(size: 10)).foregroundColor(.secondary)
+            }
+            HStack(spacing: 5) {
+                Circle().fill(Color.blue).frame(width: 6, height: 6)
+                Text("复习笔记").font(.system(size: 10)).foregroundColor(.secondary)
+            }
+            Spacer()
         }
     }
 

@@ -31,6 +31,14 @@
 		CC000000000000CCCC000017 /* WordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000017 /* WordsView.swift */; };
 		CC000000000000CCCC000018 /* CheckinStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000018 /* CheckinStore.swift */; };
 		CC000000000000CCCC000019 /* CheckinStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000019 /* CheckinStatsView.swift */; };
+		CC000000000000CCCC00001A /* Thought.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001A /* Thought.swift */; };
+		CC000000000000CCCC00001B /* ThoughtStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001B /* ThoughtStore.swift */; };
+		CC000000000000CCCC00001C /* ReflectionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001C /* ReflectionStore.swift */; };
+		CC000000000000CCCC00001D /* ClaudeClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001D /* ClaudeClient.swift */; };
+		CC000000000000CCCC00001E /* MonthlyReportGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001E /* MonthlyReportGenerator.swift */; };
+		CC000000000000CCCC00001F /* ThoughtCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001F /* ThoughtCard.swift */; };
+		CC000000000000CCCC000020 /* ThoughtsStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000020 /* ThoughtsStatsView.swift */; };
+		CC000000000000CCCC000021 /* NoteReviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000021 /* NoteReviewStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +68,14 @@
 		FF000000000000FFFF000017 /* WordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordsView.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000018 /* CheckinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckinStore.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000019 /* CheckinStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckinStatsView.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001A /* Thought.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Thought.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001B /* ThoughtStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtStore.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001C /* ReflectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflectionStore.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001D /* ClaudeClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeClient.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001E /* MonthlyReportGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyReportGenerator.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF00001F /* ThoughtCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtCard.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF000020 /* ThoughtsStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtsStatsView.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF000021 /* NoteReviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteReviewStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +119,8 @@
 				FF000000000000FFFF000004 /* SoundPlayer.swift */,
 				FF000000000000FFFF000005 /* ScreenLockMonitor.swift */,
 				FF000000000000FFFF000012 /* Speaker.swift */,
+				FF000000000000FFFF00001D /* ClaudeClient.swift */,
+				FF000000000000FFFF00001E /* MonthlyReportGenerator.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -121,6 +139,8 @@
 				FF000000000000FFFF000016 /* FlashcardCard.swift */,
 				FF000000000000FFFF000017 /* WordsView.swift */,
 				FF000000000000FFFF000019 /* CheckinStatsView.swift */,
+				FF000000000000FFFF00001F /* ThoughtCard.swift */,
+				FF000000000000FFFF000020 /* ThoughtsStatsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -133,6 +153,10 @@
 				FF000000000000FFFF000014 /* Word.swift */,
 				FF000000000000FFFF000015 /* WordStore.swift */,
 				FF000000000000FFFF000018 /* CheckinStore.swift */,
+				FF000000000000FFFF00001A /* Thought.swift */,
+				FF000000000000FFFF00001B /* ThoughtStore.swift */,
+				FF000000000000FFFF00001C /* ReflectionStore.swift */,
+				FF000000000000FFFF000021 /* NoteReviewStore.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -238,6 +262,14 @@
 				CC000000000000CCCC000017 /* WordsView.swift in Sources */,
 				CC000000000000CCCC000018 /* CheckinStore.swift in Sources */,
 				CC000000000000CCCC000019 /* CheckinStatsView.swift in Sources */,
+				CC000000000000CCCC00001A /* Thought.swift in Sources */,
+				CC000000000000CCCC00001B /* ThoughtStore.swift in Sources */,
+				CC000000000000CCCC00001C /* ReflectionStore.swift in Sources */,
+				CC000000000000CCCC00001D /* ClaudeClient.swift in Sources */,
+				CC000000000000CCCC00001E /* MonthlyReportGenerator.swift in Sources */,
+				CC000000000000CCCC00001F /* ThoughtCard.swift in Sources */,
+				CC000000000000CCCC000020 /* ThoughtsStatsView.swift in Sources */,
+				CC000000000000CCCC000021 /* NoteReviewStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

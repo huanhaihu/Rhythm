@@ -7,6 +7,12 @@ struct FlashcardCard: View {
     @State private var sessionReviewed: Int = 0
     @State private var queue: [QueueEntry] = []
     @State private var position: Int = 0
+    @State private var initialTotal: Int = 0
+    @State private var processedIds: Set<UUID> = []
+
+    private var pendingCount: Int {
+        max(0, initialTotal - processedIds.count)
+    }
 
     private struct QueueEntry: Identifiable {
         let id: UUID
@@ -20,8 +26,8 @@ struct FlashcardCard: View {
                 Text("单词复习")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
-                if !queue.isEmpty || currentWord != nil {
-                    Text("待复习 \(queue.count + (currentWord != nil ? 1 : 0))")
+                if pendingCount > 0 || currentWord != nil {
+                    Text("待复习 \(pendingCount)")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
@@ -117,15 +123,15 @@ struct FlashcardCard: View {
                         var w = word
                         w.markUnknown()
                         wordStore.update(w)
-                        // Re-insert immediately — will appear after next card
-                        enqueue(wordId: word.id, skip: 1)
+                        processedIds.insert(word.id)
                         advance()
                     }
                     actionButton(title: "认识", color: .green) {
                         var w = word
                         w.markKnown()
                         wordStore.update(w)
-                        // Re-insert to appear after 3-5 more cards
+                        processedIds.insert(word.id)
+                        // Reinforcement: re-appears after 3-5 more cards in this session
                         let delay = Int.random(in: 3...5)
                         enqueue(wordId: word.id, skip: delay)
                         advance()
@@ -135,6 +141,7 @@ struct FlashcardCard: View {
                             var w = word
                             w.retire()
                             wordStore.update(w)
+                            processedIds.insert(word.id)
                             advance()
                         }
                     }
@@ -167,9 +174,12 @@ struct FlashcardCard: View {
     }
 
     private func buildQueue() {
-        queue = wordStore.dueWords.map {
+        let due = wordStore.dueWords
+        queue = due.map {
             QueueEntry(id: UUID(), wordId: $0.id, skipRemaining: 0)
         }
+        initialTotal = due.count
+        processedIds.removeAll()
         pullNext()
     }
 

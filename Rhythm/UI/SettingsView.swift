@@ -200,6 +200,17 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Claude API") {
+                LabeledContent("API Key") {
+                    SecureField("sk-ant-...", text: $settings.claudeAPIKey)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 260)
+                }
+                Text("用于每月自动生成「感受月报」。留空则不生成。可在 console.anthropic.com 获取。")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
             Section("提示音") {
                 // — 休息提示音 —
                 LabeledContent("休息提示音") {

@@ -18,6 +18,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var sessionStore: SessionStore?
     private var wordStore: WordStore?
     private var checkinStore: CheckinStore?
+    private var noteReviewStore: NoteReviewStore?
+    private var thoughtStore: ThoughtStore?
+    private var reflectionStore: ReflectionStore?
+    private var reportGenerator: MonthlyReportGenerator?
     private var soundPlayer: SoundPlayer?
     private var timerEngine: TimerEngine?
     private var overlayManager: OverlayWindowManager?
@@ -36,6 +40,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let store  = SessionStore()
         let words  = WordStore()
         let checkin = CheckinStore()
+        let noteReviews = NoteReviewStore()
+        let thoughts = ThoughtStore()
+        let reflections = ReflectionStore()
+        let generator = MonthlyReportGenerator(
+            thoughtStore: thoughts,
+            reflectionStore: reflections,
+            settings: s
+        )
         let sound  = SoundPlayer(settings: s)
         let engine = TimerEngine(settings: s, sessionStore: store, soundPlayer: sound)
         let overlay = OverlayWindowManager()
@@ -50,6 +62,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sessionStore  = store
         wordStore     = words
         checkinStore  = checkin
+        noteReviewStore = noteReviews
+        thoughtStore  = thoughts
+        reflectionStore = reflections
+        reportGenerator = generator
         soundPlayer   = sound
         timerEngine   = engine
         overlayManager = overlay
@@ -58,6 +74,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
         setupPopover()
+
+        Task { [weak generator] in
+            await generator?.generateIfNeeded()
+        }
     }
 
     // MARK: - Status Item
@@ -99,13 +119,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
               let store = sessionStore else { return }
 
         guard let words = wordStore,
-              let checkin = checkinStore else { return }
+              let checkin = checkinStore,
+              let noteReviews = noteReviewStore,
+              let thoughts = thoughtStore,
+              let reflections = reflectionStore,
+              let generator = reportGenerator else { return }
         let content = MenuBarContentView()
             .environmentObject(engine)
             .environmentObject(settings)
             .environmentObject(store)
             .environmentObject(words)
             .environmentObject(checkin)
+            .environmentObject(noteReviews)
+            .environmentObject(thoughts)
+            .environmentObject(reflections)
+            .environmentObject(generator)
             .tint(Color(nsColor: .controlAccentColor))
         let controller = NSHostingController(rootView: content)
         popover = NSPopover()
@@ -144,6 +172,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
               let store = sessionStore,
               let words = wordStore,
               let checkin = checkinStore,
+              let noteReviews = noteReviewStore,
+              let thoughts = thoughtStore,
+              let reflections = reflectionStore,
+              let generator = reportGenerator,
               let sound = soundPlayer else { return }
 
         mainViewSelectedTab = tab
@@ -155,6 +187,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(store)
                 .environmentObject(words)
                 .environmentObject(checkin)
+                .environmentObject(noteReviews)
+                .environmentObject(thoughts)
+                .environmentObject(reflections)
+                .environmentObject(generator)
                 .environmentObject(sound)
             let controller = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: controller)
@@ -171,6 +207,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(store)
                 .environmentObject(words)
                 .environmentObject(checkin)
+                .environmentObject(noteReviews)
+                .environmentObject(thoughts)
+                .environmentObject(reflections)
+                .environmentObject(generator)
                 .environmentObject(sound)
             mainWindow?.contentViewController = NSHostingController(rootView: view)
         }

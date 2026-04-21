@@ -5,6 +5,7 @@ struct MenuBarContentView: View {
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var sessionStore: SessionStore
     @EnvironmentObject var checkinStore: CheckinStore
+    @EnvironmentObject var noteReviewStore: NoteReviewStore
 
     @State private var showImmediateBreakAlert = false
 
@@ -21,6 +22,7 @@ struct MenuBarContentView: View {
                     FlashcardCard()
                 } else {
                     TranslateCard()
+                    ThoughtCard()
                 }
                 recordsCard
             }
@@ -136,31 +138,25 @@ struct MenuBarContentView: View {
 
             Divider().opacity(0.4).padding(.vertical, 8)
 
-            HStack(spacing: 8) {
-                Button {
+            HStack(spacing: 10) {
+                checkinButton(
+                    label: "今日健身",
+                    isActive: checkinStore.todayChecked,
+                    streak: checkinStore.currentStreak,
+                    color: .green
+                ) {
                     checkinStore.todayChecked.toggle()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: checkinStore.todayChecked ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 16))
-                            .foregroundColor(checkinStore.todayChecked ? .green : .secondary.opacity(0.5))
-                        Text("今日健身")
-                            .font(.system(size: 12))
-                            .foregroundColor(checkinStore.todayChecked ? .primary : .secondary)
-                    }
                 }
-                .buttonStyle(.plain)
-                .focusable(false)
 
-                if checkinStore.currentStreak > 0 {
-                    Text("连续 \(checkinStore.currentStreak) 天")
-                        .font(.system(size: 10, weight: .medium))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.green.opacity(0.15))
-                        .foregroundColor(.green)
-                        .clipShape(Capsule())
+                checkinButton(
+                    label: "复习笔记",
+                    isActive: noteReviewStore.todayReviewed,
+                    streak: noteReviewStore.currentStreak,
+                    color: .blue
+                ) {
+                    noteReviewStore.todayReviewed.toggle()
                 }
+
                 Spacer()
             }
         }
@@ -168,6 +164,34 @@ struct MenuBarContentView: View {
         .padding(.vertical, 12)
         .background(.regularMaterial)
         .cornerRadius(10)
+    }
+
+    @ViewBuilder
+    private func checkinButton(label: String, isActive: Bool, streak: Int, color: Color, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 5) {
+            Button(action: action) {
+                HStack(spacing: 5) {
+                    Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 15))
+                        .foregroundColor(isActive ? color : .secondary.opacity(0.5))
+                    Text(label)
+                        .font(.system(size: 12))
+                        .foregroundColor(isActive ? .primary : .secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .focusable(false)
+
+            if streak > 0 {
+                Text("\(streak)")
+                    .font(.system(size: 10, weight: .medium))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(color.opacity(0.15))
+                    .foregroundColor(color)
+                    .clipShape(Capsule())
+            }
+        }
     }
 
     private var timerDescription: String {

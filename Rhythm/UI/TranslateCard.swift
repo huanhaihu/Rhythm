@@ -69,26 +69,23 @@ struct TranslateCard: View {
                 .buttonStyle(.plain)
                 .focusable(false)
                 .disabled(input.isEmpty)
+
+                Button(action: submitQuery) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(input.isEmpty ? Color.secondary.opacity(0.35) : .accentColor)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .focusable(false)
+                .disabled(input.isEmpty)
+                .keyboardShortcut(.defaultAction)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .background(.thinMaterial)
             .cornerRadius(6)
-
-            Button(action: submitQuery) {
-                Text("查询")
-                    .font(.system(size: 12, weight: .medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(input.isEmpty ? Color.accentColor.opacity(0.3) : Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(6)
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .disabled(input.isEmpty)
-            .padding(.top, 6)
-            .keyboardShortcut(.defaultAction)
 
             Divider().opacity(0.5).padding(.vertical, 8)
 

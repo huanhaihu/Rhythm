@@ -26,7 +26,8 @@ struct CombinedStatsView: View {
     enum Section: String, CaseIterable, Identifiable {
         case focus = "专注模式"
         case words = "语言学习"
-        case checkin = "健身打卡"
+        case checkin = "每日打卡"
+        case thoughts = "每日随想"
         var id: String { rawValue }
     }
 
@@ -47,6 +48,8 @@ struct CombinedStatsView: View {
                 WordsView()
             case .checkin:
                 CheckinStatsView()
+            case .thoughts:
+                ThoughtsStatsView()
             }
         }
     }
