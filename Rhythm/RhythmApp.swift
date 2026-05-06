@@ -78,6 +78,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task { [weak generator] in
             await generator?.generateIfNeeded()
         }
+
+        // Warm up the local English-Chinese dictionary in the background so the first
+        // translate query is instant.
+        _ = DictionaryService.shared
     }
 
     // MARK: - Status Item

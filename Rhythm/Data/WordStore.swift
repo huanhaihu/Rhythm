@@ -16,7 +16,8 @@ final class WordStore: ObservableObject {
         pruneOld()
     }
 
-    func record(english: String, chinese: String, direction: Word.Direction) {
+    func record(english: String, chinese: String, direction: Word.Direction,
+                phonetic: String? = nil, senses: [WordSense]? = nil) {
         let key = english.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let cn = chinese.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty, !cn.isEmpty else { return }
@@ -25,6 +26,8 @@ final class WordStore: ObservableObject {
             words[idx].lastSeen = Date()
             words[idx].lookupCount += 1
             if words[idx].chinese != cn { words[idx].chinese = cn }
+            if let p = phonetic, !p.isEmpty { words[idx].phonetic = p }
+            if let s = senses, !s.isEmpty { words[idx].senses = s }
             if words[idx].retired { words[idx].retired = false; words[idx].box = 1; words[idx].nextDueDate = Date() }
         } else {
             let now = Date()
@@ -32,6 +35,8 @@ final class WordStore: ObservableObject {
                 id: UUID(),
                 english: key,
                 chinese: cn,
+                phonetic: phonetic,
+                senses: senses,
                 direction: direction,
                 firstSeen: now,
                 lastSeen: now,
@@ -52,10 +57,25 @@ final class WordStore: ObservableObject {
         persist()
     }
 
+    func remove(id: UUID) {
+        let before = words.count
+        words.removeAll { $0.id == id }
+        if words.count != before { persist() }
+    }
+
     /// Words due for review right now, oldest first (ones user hasn't reviewed recently).
     var dueWords: [Word] {
         words.filter { $0.isDue }
             .sorted { ($0.lastReviewed ?? .distantPast) < ($1.lastReviewed ?? .distantPast) }
+    }
+
+    /// Top N non-retired words sorted by lastReviewed ascending (never-reviewed first),
+    /// regardless of Leitner due date — used for quick review from the translate card.
+    func longestUnreviewed(limit: Int) -> [Word] {
+        words.filter { !$0.retired }
+            .sorted { ($0.lastReviewed ?? .distantPast) < ($1.lastReviewed ?? .distantPast) }
+            .prefix(limit)
+            .map { $0 }
     }
 
     func lookupCount(since: Date) -> Int {

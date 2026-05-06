@@ -3,7 +3,9 @@ import Foundation
 struct Word: Identifiable, Codable, Equatable {
     var id: UUID
     var english: String
-    var chinese: String
+    var chinese: String      // primary single-line gloss (first sense, or whole translation)
+    var phonetic: String?    // IPA from local dictionary if available
+    var senses: [WordSense]? // multi-POS breakdown from local dictionary if available
     var direction: Direction // how user originally looked it up
     var firstSeen: Date
     var lastSeen: Date
@@ -19,14 +21,16 @@ struct Word: Identifiable, Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, english, chinese, direction, firstSeen, lastSeen
+        case id, english, chinese, phonetic, senses, direction, firstSeen, lastSeen
         case lookupCount, box, nextDueDate, lastReviewed, retired
     }
 
-    init(id: UUID, english: String, chinese: String, direction: Direction,
+    init(id: UUID, english: String, chinese: String, phonetic: String? = nil,
+         senses: [WordSense]? = nil, direction: Direction,
          firstSeen: Date, lastSeen: Date, lookupCount: Int, box: Int,
          nextDueDate: Date, lastReviewed: Date?, retired: Bool) {
         self.id = id; self.english = english; self.chinese = chinese
+        self.phonetic = phonetic; self.senses = senses
         self.direction = direction; self.firstSeen = firstSeen; self.lastSeen = lastSeen
         self.lookupCount = lookupCount; self.box = box; self.nextDueDate = nextDueDate
         self.lastReviewed = lastReviewed; self.retired = retired
@@ -37,6 +41,8 @@ struct Word: Identifiable, Codable, Equatable {
         id          = try c.decode(UUID.self, forKey: .id)
         english     = try c.decode(String.self, forKey: .english)
         chinese     = try c.decode(String.self, forKey: .chinese)
+        phonetic    = try c.decodeIfPresent(String.self, forKey: .phonetic)
+        senses      = try c.decodeIfPresent([WordSense].self, forKey: .senses)
         direction   = try c.decodeIfPresent(Direction.self, forKey: .direction) ?? .enToCn
         firstSeen   = try c.decode(Date.self, forKey: .firstSeen)
         lastSeen    = try c.decode(Date.self, forKey: .lastSeen)

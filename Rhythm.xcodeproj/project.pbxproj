@@ -39,6 +39,9 @@
 		CC000000000000CCCC00001F /* ThoughtCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF00001F /* ThoughtCard.swift */; };
 		CC000000000000CCCC000020 /* ThoughtsStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000020 /* ThoughtsStatsView.swift */; };
 		CC000000000000CCCC000021 /* NoteReviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000021 /* NoteReviewStore.swift */; };
+		CC000000000000CCCC000022 /* WordSense.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000022 /* WordSense.swift */; };
+		CC000000000000CCCC000023 /* DictionaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000023 /* DictionaryService.swift */; };
+		CC000000000000CCCC000024 /* ecdict.tsv in Resources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000024 /* ecdict.tsv */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +79,9 @@
 		FF000000000000FFFF00001F /* ThoughtCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtCard.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000020 /* ThoughtsStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtsStatsView.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000021 /* NoteReviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteReviewStore.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF000022 /* WordSense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSense.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF000023 /* DictionaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryService.swift; sourceTree = "<group>"; };
+		FF000000000000FFFF000024 /* ecdict.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = ecdict.tsv; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,10 +111,19 @@
 				AA000000000000AAAA000003 /* Core */,
 				AA000000000000AAAA000004 /* UI */,
 				AA000000000000AAAA000005 /* Data */,
+				AA000000000000AAAA000007 /* Resources */,
 				FF000000000000FFFF00000F /* Assets.xcassets */,
 				FF000000000000FFFF000010 /* Info.plist */,
 			);
 			path = Rhythm;
+			sourceTree = "<group>";
+		};
+		AA000000000000AAAA000007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FF000000000000FFFF000024 /* ecdict.tsv */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		AA000000000000AAAA000003 /* Core */ = {
@@ -121,6 +136,7 @@
 				FF000000000000FFFF000012 /* Speaker.swift */,
 				FF000000000000FFFF00001D /* ClaudeClient.swift */,
 				FF000000000000FFFF00001E /* MonthlyReportGenerator.swift */,
+				FF000000000000FFFF000023 /* DictionaryService.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -151,6 +167,7 @@
 				FF000000000000FFFF00000D /* Session.swift */,
 				FF000000000000FFFF00000E /* SessionStore.swift */,
 				FF000000000000FFFF000014 /* Word.swift */,
+				FF000000000000FFFF000022 /* WordSense.swift */,
 				FF000000000000FFFF000015 /* WordStore.swift */,
 				FF000000000000FFFF000018 /* CheckinStore.swift */,
 				FF000000000000FFFF00001A /* Thought.swift */,
@@ -229,6 +246,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CC000000000000CCCC00000F /* Assets.xcassets in Resources */,
+				CC000000000000CCCC000024 /* ecdict.tsv in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +288,8 @@
 				CC000000000000CCCC00001F /* ThoughtCard.swift in Sources */,
 				CC000000000000CCCC000020 /* ThoughtsStatsView.swift in Sources */,
 				CC000000000000CCCC000021 /* NoteReviewStore.swift in Sources */,
+				CC000000000000CCCC000022 /* WordSense.swift in Sources */,
+				CC000000000000CCCC000023 /* DictionaryService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
