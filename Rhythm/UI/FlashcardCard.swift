@@ -42,8 +42,7 @@ struct FlashcardCard: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .cornerRadius(10)
+        .tintedCard(.purple)
         .onAppear { buildQueue() }
     }
 

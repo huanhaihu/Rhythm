@@ -33,8 +33,7 @@ struct ThoughtCard: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .cornerRadius(10)
+        .tintedCard(.blue)
         .onAppear { draft = savedText }
         .onChange(of: thoughtStore.todayKey) { _, _ in
             draft = savedText

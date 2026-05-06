@@ -143,7 +143,8 @@ struct MenuBarContentView: View {
                     label: "今日健身",
                     isActive: checkinStore.todayChecked,
                     streak: checkinStore.currentStreak,
-                    color: .green
+                    color: .green,
+                    warn: checkinStore.shouldWarnWeekly
                 ) {
                     checkinStore.todayChecked.toggle()
                 }
@@ -162,12 +163,11 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .cornerRadius(10)
+        .tintedCard(.indigo)
     }
 
     @ViewBuilder
-    private func checkinButton(label: String, isActive: Bool, streak: Int, color: Color, action: @escaping () -> Void) -> some View {
+    private func checkinButton(label: String, isActive: Bool, streak: Int, color: Color, warn: Bool = false, action: @escaping () -> Void) -> some View {
         HStack(spacing: 5) {
             Button(action: action) {
                 HStack(spacing: 5) {
@@ -176,7 +176,7 @@ struct MenuBarContentView: View {
                         .foregroundColor(isActive ? color : .secondary.opacity(0.5))
                     Text(label)
                         .font(.system(size: 12))
-                        .foregroundColor(isActive ? .primary : .secondary)
+                        .foregroundColor(warn ? .red : (isActive ? .primary : .secondary))
                 }
             }
             .buttonStyle(.plain)
@@ -263,8 +263,7 @@ struct MenuBarContentView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .cornerRadius(10)
+        .tintedCard(.gray)
     }
 
     private var recentSessions: [Session] {
@@ -391,6 +390,27 @@ struct MenuBarContentView: View {
         .disabled(disabled)
     }
 
+}
+
+// MARK: - Tinted card styling
+
+extension View {
+    /// Applies a light tinted background + subtle border on top of the system material,
+    /// so sibling cards share the menu-bar glass look but remain visually distinct.
+    func tintedCard(_ tint: Color, cornerRadius: CGFloat = 10) -> some View {
+        self
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.regularMaterial)
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(tint.opacity(0.07))
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(tint.opacity(0.28), lineWidth: 0.5)
+                }
+                .allowsHitTesting(false)
+            )
+    }
 }
 
 // MARK: - Menu bar label

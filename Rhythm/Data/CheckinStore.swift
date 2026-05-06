@@ -53,6 +53,20 @@ final class CheckinStore: ObservableObject {
         }.count
     }
 
+    var weekCheckinCount: Int {
+        var cal = Calendar.current
+        cal.firstWeekday = 2
+        guard let week = cal.dateInterval(of: .weekOfYear, for: Date()) else { return 0 }
+        return checkins.filter { key, val in
+            guard val, let date = formatter.date(from: key) else { return false }
+            return week.contains(date)
+        }.count
+    }
+
+    var shouldWarnWeekly: Bool {
+        Calendar.current.component(.weekday, from: Date()) == 7 && weekCheckinCount < 3
+    }
+
     private func persist() {
         if let data = try? JSONEncoder().encode(checkins) {
             try? data.write(to: fileURL, options: .atomic)
