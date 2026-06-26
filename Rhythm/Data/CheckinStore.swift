@@ -17,6 +17,18 @@ final class CheckinStore: ObservableObject {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("checkins.json")
         load()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(dayChanged),
+            name: .NSCalendarDayChanged,
+            object: nil
+        )
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func dayChanged() {
+        DispatchQueue.main.async { [weak self] in self?.objectWillChange.send() }
     }
 
     var todayKey: String { formatter.string(from: Date()) }

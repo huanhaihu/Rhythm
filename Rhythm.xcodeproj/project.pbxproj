@@ -42,6 +42,7 @@
 		CC000000000000CCCC000022 /* WordSense.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000022 /* WordSense.swift */; };
 		CC000000000000CCCC000023 /* DictionaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000023 /* DictionaryService.swift */; };
 		CC000000000000CCCC000024 /* ecdict.tsv in Resources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000024 /* ecdict.tsv */; };
+		CC000000000000CCCC000025 /* DailyReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF000000000000FFFF000025 /* DailyReminder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +83,7 @@
 		FF000000000000FFFF000022 /* WordSense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSense.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000023 /* DictionaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryService.swift; sourceTree = "<group>"; };
 		FF000000000000FFFF000024 /* ecdict.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = ecdict.tsv; sourceTree = "<group>"; };
+		FF000000000000FFFF000025 /* DailyReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyReminder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +139,7 @@
 				FF000000000000FFFF00001D /* ClaudeClient.swift */,
 				FF000000000000FFFF00001E /* MonthlyReportGenerator.swift */,
 				FF000000000000FFFF000023 /* DictionaryService.swift */,
+				FF000000000000FFFF000025 /* DailyReminder.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -290,6 +293,7 @@
 				CC000000000000CCCC000021 /* NoteReviewStore.swift in Sources */,
 				CC000000000000CCCC000022 /* WordSense.swift in Sources */,
 				CC000000000000CCCC000023 /* DictionaryService.swift in Sources */,
+				CC000000000000CCCC000025 /* DailyReminder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

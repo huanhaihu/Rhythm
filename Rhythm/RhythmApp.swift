@@ -7,6 +7,7 @@ import Combine
 class AppRouter: ObservableObject {
     static let shared = AppRouter()
     var openMainWindow: ((_ tab: Int) -> Void)?
+    var showPopover: (() -> Void)?
 }
 
 // MARK: - App Delegate
@@ -25,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var soundPlayer: SoundPlayer?
     private var timerEngine: TimerEngine?
     private var overlayManager: OverlayWindowManager?
+    private var dailyReminder: DailyReminder?
 
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
@@ -71,9 +73,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         overlayManager = overlay
 
         AppRouter.shared.openMainWindow = { [weak self] tab in self?.openMainWindow(tab: tab) }
+        AppRouter.shared.showPopover = { [weak self] in self?.showPopover() }
 
         setupStatusItem()
         setupPopover()
+
+        dailyReminder = DailyReminder(
+            settings: s,
+            checkinStore: checkin,
+            noteReviewStore: noteReviews
+        )
 
         Task { [weak generator] in
             await generator?.generateIfNeeded()
@@ -158,6 +167,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
                 self?.closePopover()
             }
+        }
+    }
+
+    func showPopover() {
+        guard let button = statusItem?.button else { return }
+        if popover?.isShown == true { return }
+        setupPopover()
+        popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.closePopover()
         }
     }
 

@@ -13,6 +13,9 @@ class Settings: ObservableObject {
     @AppStorage("customSoundPath")       var customSoundPath: String = ""
     @AppStorage("customMicroSoundPath")  var customMicroSoundPath: String = ""
     @AppStorage("claudeAPIKey")          var claudeAPIKey: String = ""
+    @AppStorage("dailyReminderEnabled")  var dailyReminderEnabled: Bool = true
+    @AppStorage("dailyReminderHour")     var dailyReminderHour: Int = 21
+    @AppStorage("dailyReminderMinute")   var dailyReminderMinute: Int = 0
 
     static let systemSounds = [
         "Basso", "Blow", "Bottle", "Frog", "Funk",

@@ -200,6 +200,22 @@ struct SettingsView: View {
                 }
             }
 
+            Section("每日提醒") {
+                Toggle("启用每日打卡提醒", isOn: $settings.dailyReminderEnabled)
+                if settings.dailyReminderEnabled {
+                    LabeledContent("提醒时间") {
+                        DatePicker("",
+                                   selection: reminderTimeBinding,
+                                   displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                            .datePickerStyle(.compact)
+                    }
+                    Text("到点检查今天是否完成「健身打卡」和「复习笔记」。两项都完成则不打扰。")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+
             Section("Claude API") {
                 LabeledContent("API Key") {
                     SecureField("sk-ant-...", text: $settings.claudeAPIKey)
@@ -277,6 +293,22 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private var reminderTimeBinding: Binding<Date> {
+        Binding(
+            get: {
+                var c = DateComponents()
+                c.hour = settings.dailyReminderHour
+                c.minute = settings.dailyReminderMinute
+                return Calendar.current.date(from: c) ?? Date()
+            },
+            set: { newValue in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                settings.dailyReminderHour = c.hour ?? 21
+                settings.dailyReminderMinute = c.minute ?? 0
+            }
+        )
+    }
 
     private func customSoundRow(path: String,
                                 onBrowser: @escaping () -> Void,
